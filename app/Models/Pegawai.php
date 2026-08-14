@@ -26,10 +26,7 @@ class Pegawai extends Model
         return $this->hasOne(User::class);
     }
 
-    public function aktivitas()
-    {
-        return $this->hasMany(Aktivitas::class, 'pegawai_nip', 'nip');
-    }
+
 
     public function analisis()
     {

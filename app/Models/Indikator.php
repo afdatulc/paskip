@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Services\CapaianCalculator;
 
 class Indikator extends Model
 {
@@ -25,6 +26,7 @@ class Indikator extends Model
         'jenis_indikator',
         'periode',
         'tipe',
+        'polarisasi',
         'satuan',
         'target_tahunan',
         'tahun',
@@ -99,10 +101,7 @@ class Indikator extends Model
         return $this->hasMany(OutputRealisasi::class);
     }
 
-    public function aktivitas()
-    {
-        return $this->hasMany(Aktivitas::class);
-    }
+
 
     public function kegiatanMasters()
     {
@@ -129,11 +128,61 @@ class Indikator extends Model
         return $this->hasMany(CapaianKinerja::class);
     }
 
+    public function targetRenstras()
+    {
+        return $this->hasMany(TargetRenstra::class);
+    }
+
+    public function pkTahunans()
+    {
+        return $this->hasMany(PkTahunan::class);
+    }
+
+    public function getTargetTahunanEfektifAttribute(): float
+    {
+        $tahun = $this->tahun ?? date('Y');
+        $pk = $this->pkTahunans->firstWhere('tahun', $tahun);
+        if (!$pk) {
+            $pk = $this->pkTahunans()->where('tahun', $tahun)->first();
+        }
+        if ($pk) {
+            return (float) $pk->target_efektif;
+        }
+        return (float) $this->target_tahunan;
+    }
+
+    public function getDiscrepancyQ4Attribute(): ?array
+    {
+        $tahun = $this->tahun ?? date('Y');
+        $pk = $this->pkTahunans->firstWhere('tahun', $tahun);
+        if (!$pk) {
+            $pk = $this->pkTahunans()->where('tahun', $tahun)->first();
+        }
+
+        $targetTw4 = $this->target ? $this->target->target_tw4 : null;
+
+        if ($pk && !is_null($targetTw4) && (float)$targetTw4 != (float)$pk->target_efektif) {
+            return [
+                'target_tw4' => (float)$targetTw4,
+                'target_pk' => (float)$pk->target_efektif,
+                'status_revisi' => $pk->status_revisi,
+                'selisih' => abs((float)$targetTw4 - (float)$pk->target_efektif),
+            ];
+        }
+
+        return null;
+    }
+
     public function getCapaianTahunanAttribute()
     {
         $realisasiTerakhir = $this->realisasis()->orderBy('triwulan', 'desc')->first();
-        if (!$realisasiTerakhir || $this->target_tahunan == 0) return 0;
-        return ($realisasiTerakhir->realisasi_kumulatif / $this->target_tahunan) * 100;
+        if (!$realisasiTerakhir) return 0;
+
+        return CapaianCalculator::hitung(
+            $this->target_tahunan_efektif,
+            $realisasiTerakhir->realisasi_kumulatif,
+            $this->polarisasi ?? 'positif'
+        );
     }
 
     public function getStatusWarnaAttribute()

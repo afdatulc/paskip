@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Services\CapaianCalculator;
 
 class Realisasi extends Model
 {
@@ -32,9 +33,9 @@ class Realisasi extends Model
         $target = $this->indikator->target;
         $targetField = 'target_tw' . $this->triwulan;
         $targetVal = $target ? $target->$targetField : 0;
-        
-        if ($targetVal == 0) return 0;
-        return ($this->realisasi_kumulatif / $targetVal) * 100;
+        $polarisasi = $this->indikator->polarisasi ?? 'positif';
+
+        return CapaianCalculator::hitung($targetVal, $this->realisasi_kumulatif, $polarisasi);
     }
 
     /**

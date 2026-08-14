@@ -9,6 +9,9 @@ use App\Http\Controllers\AnalisisController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\PublicInputController;
 use App\Http\Controllers\CapaianKinerjaController;
+use App\Http\Controllers\RenstraController;
+use App\Http\Controllers\PkTahunanController;
+use App\Http\Controllers\EvaluasiTahunanController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
@@ -94,6 +97,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('target', [TargetController::class, 'index'])->name('target.index');
     Route::get('target/{id}', [TargetController::class, 'show'])->name('target.show');
     Route::put('target/{id}', [TargetController::class, 'update'])->name('target.update');
+    Route::post('target/{id}/sync-q4', [TargetController::class, 'syncQ4'])->name('target.sync-q4');
     
     // Template Word
     Route::get('/template-word', [App\Http\Controllers\TemplateWordController::class, 'index'])->name('template.word.index');
@@ -105,10 +109,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('tabel-ro/import', [App\Http\Controllers\TabelRoController::class, 'import'])->name('tabel-ro.import');
     Route::get('tabel-ro/template', [App\Http\Controllers\TabelRoController::class, 'downloadTemplate'])->name('tabel-ro.template');
     Route::resource('tabel-ro', App\Http\Controllers\TabelRoController::class)->except(['show']);
-    Route::get('admin/aktivitas', [App\Http\Controllers\Admin\AktivitasController::class, 'index'])->name('admin.aktivitas.index');
-    Route::get('admin/aktivitas/{aktivitas}/edit', [App\Http\Controllers\Admin\AktivitasController::class, 'edit'])->name('admin.aktivitas.edit');
-    Route::put('admin/aktivitas/{aktivitas}', [App\Http\Controllers\Admin\AktivitasController::class, 'update'])->name('admin.aktivitas.update');
-    Route::delete('admin/aktivitas/{aktivitas}', [App\Http\Controllers\Admin\AktivitasController::class, 'destroy'])->name('admin.aktivitas.destroy');
+
     
     Route::resource('analisis', AnalisisController::class);
     
@@ -118,14 +119,34 @@ Route::middleware(['auth'])->group(function () {
     Route::get('rekap-capaian', [App\Http\Controllers\CapaianController::class, 'rekap'])->name('rekap.capaian');
     Route::get('rekap-capaian/export', [App\Http\Controllers\CapaianController::class, 'export'])->name('rekap.capaian.export');
     
-    Route::get('monitoring-evidence', [App\Http\Controllers\Admin\EvidenceController::class, 'index'])->name('admin.evidence.index');
 
-    Route::get('notulen', [\App\Http\Controllers\NotulenController::class, 'index'])->name('notulen.index');
-    Route::post('notulen/download', [\App\Http\Controllers\NotulenController::class, 'download'])->name('notulen.download');
+
+
+    // Renstra (Rencana Strategis)
+    Route::resource('renstra', RenstraController::class)->except(['edit']);
+    Route::post('renstra/{renstra}/activate', [RenstraController::class, 'activate'])->name('renstra.activate');
+    Route::post('renstra/{renstra}/store-target', [RenstraController::class, 'storeTarget'])->name('renstra.store-target');
+    Route::get('renstra/{renstra}/download-template', [RenstraController::class, 'downloadTemplate'])->name('renstra.download-template');
+    Route::post('renstra/{renstra}/import-target', [RenstraController::class, 'importTarget'])->name('renstra.import-target');
+
+    // PK Tahunan (Perjanjian Kinerja)
+    Route::get('pk-tahunan', [PkTahunanController::class, 'index'])->name('pk-tahunan.index');
+    Route::post('pk-tahunan/generate', [PkTahunanController::class, 'generate'])->name('pk-tahunan.generate');
+    Route::put('pk-tahunan/{pk_tahunan}', [PkTahunanController::class, 'update'])->name('pk-tahunan.update');
+    Route::post('pk-tahunan/{pk_tahunan}/cancel-revisi', [PkTahunanController::class, 'cancelRevisi'])->name('pk-tahunan.cancel-revisi');
+
+    // Evaluasi Tahunan
+    Route::get('evaluasi-tahunan', [EvaluasiTahunanController::class, 'index'])->name('evaluasi-tahunan.index');
+    Route::post('evaluasi-tahunan', [EvaluasiTahunanController::class, 'store'])->name('evaluasi-tahunan.store');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Analisis Kendala & Pelaksanaan RTL (Baru)
+    Route::get('analisis-kendala-baru', [App\Http\Controllers\AnalisisKendalaBaruController::class, 'index'])->name('analisis-kendala-baru.index');
+    Route::post('analisis-kendala-baru', [App\Http\Controllers\AnalisisKendalaBaruController::class, 'store'])->name('analisis-kendala-baru.store');
+
+    Route::get('pelaksanaan-rtl-baru', [App\Http\Controllers\PelaksanaanRtlBaruController::class, 'index'])->name('pelaksanaan-rtl-baru.index');
+    Route::post('pelaksanaan-rtl-baru/{rtl}', [App\Http\Controllers\PelaksanaanRtlBaruController::class, 'store'])->name('pelaksanaan-rtl-baru.store');
 });
 
 require __DIR__.'/auth.php';

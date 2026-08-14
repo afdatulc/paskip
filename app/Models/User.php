@@ -31,6 +31,19 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
+    public function isPimpinan()
+    {
+        return $this->role === 'pimpinan';
+    }
+
+    /**
+     * Admin atau Pimpinan — bisa melihat seluruh data.
+     */
+    public function isAdminOrPimpinan()
+    {
+        return in_array($this->role, ['admin', 'pimpinan']);
+    }
+
     public function isPegawai()
     {
         return $this->role === 'pegawai';

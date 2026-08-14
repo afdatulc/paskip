@@ -24,6 +24,7 @@
                 </thead>
                 <tbody class="border-top-0">
                     @foreach($indikators as $i)
+                    @php $disc = $i->discrepancy_q4; @endphp
                     <tr id="row-{{ $i->id }}">
                         <td>{{ $loop->iteration }}</td>
                         <td>
@@ -34,7 +35,17 @@
                         <td class="text-center fw-bold text-dark">{{ $i->target->target_tw1 ?? '-' }}</td>
                         <td class="text-center fw-bold text-dark">{{ $i->target->target_tw2 ?? '-' }}</td>
                         <td class="text-center fw-bold text-dark">{{ $i->target->target_tw3 ?? '-' }}</td>
-                        <td class="text-center fw-bold text-dark">{{ $i->target->target_tw4 ?? '-' }}</td>
+                        <td class="text-center fw-bold text-dark">
+                            {{ $i->target->target_tw4 ?? '-' }}
+                            @if($disc)
+                                <div class="mt-1">
+                                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle rounded-pill extra-small"
+                                          title="Target Q4 ({{ number_format($disc['target_tw4'], 2) }}) tidak sama dengan PK Tahunan ({{ number_format($disc['target_pk'], 2) }})">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Beda PK ({{ number_format($disc['target_pk'], 2) }})
+                                    </span>
+                                </div>
+                            @endif
+                        </td>
                         <td class="text-center">
                             <button class="btn btn-sm btn-outline-primary rounded-3 edit-target" data-id="{{ $i->id }}" title="Edit Target">
                                 <i class="fas fa-edit"></i>
@@ -61,10 +72,23 @@
                 @method('PUT')
                 <input type="hidden" id="indikator_id">
                 <div class="modal-body p-4">
-                    <div class="mb-4 bg-light p-3 rounded-4 border-start border-4 border-primary">
+                    <div class="mb-3 bg-light p-3 rounded-4 border-start border-4 border-primary">
                         <small class="text-muted fw-bold d-block mb-1">INDIKATOR:</small>
                         <div class="fw-bold text-dark" id="display_indikator">...</div>
                         <small class="text-primary fw-bold" id="display_kode">...</small>
+                    </div>
+
+                    {{-- Banner Peringatan Perbedaan TW4 & PK --}}
+                    <div id="alertDiscrepancy" class="alert alert-warning border-0 rounded-4 small mb-3 d-none">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                Target Q4 (<strong id="text_tw4">0</strong>) ≠ PK Tahunan (<strong id="text_pk">0</strong>).
+                            </div>
+                            <button type="button" class="btn btn-sm btn-warning rounded-pill px-3 shadow-sm fw-bold" id="btnSyncQ4">
+                                <i class="fas fa-sync me-1"></i>Samakan
+                            </button>
+                        </div>
                     </div>
 
                     <div class="row g-3">
@@ -103,20 +127,40 @@
             language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/id.json' }
         });
 
+        let currentPkEfektif = 0;
+
         // Edit Button Click
         $(document).on('click', '.edit-target', function() {
             const id = $(this).data('id');
             $('#indikator_id').val(id);
+            $('#alertDiscrepancy').addClass('d-none');
             $('#modalTarget').modal('show');
 
             $.get(`{{ url('target') }}/${id}`, function(data) {
                 $('#display_indikator').text(data.indikator.indikator_kinerja);
-                $('#display_kode').text(data.indikator.kode);
+                $('#display_kode').text(data.indikator.kode || '-');
                 $('#target_tw1').val(data.target_tw1);
                 $('#target_tw2').val(data.target_tw2);
                 $('#target_tw3').val(data.target_tw3);
                 $('#target_tw4').val(data.target_tw4);
+
+                currentPkEfektif = data.target_pk_efektif || 0;
+
+                if (data.discrepancy_q4) {
+                    $('#text_tw4').text(data.discrepancy_q4.target_tw4);
+                    $('#text_pk').text(data.discrepancy_q4.target_pk);
+                    $('#alertDiscrepancy').removeClass('d-none');
+                }
             });
+        });
+
+        // Tombol Samakan Q4 ke PK
+        $('#btnSyncQ4').on('click', function() {
+            if (currentPkEfektif !== undefined) {
+                $('#target_tw4').val(currentPkEfektif);
+                toastr.info(`Target TW 4 diset mengikuti PK Tahunan (${currentPkEfektif})`);
+                $('#alertDiscrepancy').addClass('d-none');
+            }
         });
 
         // Form Submit
@@ -134,19 +178,7 @@
                 success: function(response) {
                     toastr.success(response.message);
                     $('#modalTarget').modal('hide');
-                    
-                    const data = response.data;
-                    const row = $(`#row-${id}`);
-                    
-                    // Update TW Columns
-                    row.find('td:nth-child(4)').text(data.target_tw1 || '-');
-                    row.find('td:nth-child(5)').text(data.target_tw2 || '-');
-                    row.find('td:nth-child(6)').text(data.target_tw3 || '-');
-                    row.find('td:nth-child(7)').text(data.target_tw4 || '-');
-
-                    // Invalidate and draw (keep paging)
-                    const table = $('#targetTable').DataTable();
-                    table.row(row).invalidate().draw(false);
+                    window.location.reload();
                 },
                 error: function(xhr) {
                     btn.prop('disabled', false).html('Simpan Perubahan');

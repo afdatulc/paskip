@@ -37,8 +37,5 @@ class KegiatanMaster extends Model
         return $this->belongsToMany(Pegawai::class, 'kegiatan_anggotas', 'kegiatan_master_id', 'pegawai_id');
     }
 
-    public function aktivitas()
-    {
-        return $this->hasMany(Aktivitas::class, 'kegiatan_id');
-    }
+
 }

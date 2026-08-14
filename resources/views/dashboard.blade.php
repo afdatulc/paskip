@@ -270,7 +270,7 @@
                 datasets: [{
                     label: 'Capaian (%)',
                     data: dataCapaian,
-                    backgroundColor: dataCapaian.map(v => v >= 100 ? '#28a745' : (v >= 80 ? '#ffc107' : '#dc3545')),
+                    backgroundColor: dataCapaian.map(v => v >= 100 ? '#0F766E' : (v >= 80 ? '#B45309' : '#BE123C')),
                     borderRadius: 5
                 }]
             },
@@ -314,7 +314,7 @@
                 labels: ['Hijau', 'Kuning', 'Merah'],
                 datasets: [{
                     data: [{{ $summary['hijau'] }}, {{ $summary['kuning'] }}, {{ $summary['merah'] }}],
-                    backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                    backgroundColor: ['#0F766E', '#B45309', '#BE123C'],
                     borderWidth: 0
                 }]
             },

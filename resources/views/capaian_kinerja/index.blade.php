@@ -166,18 +166,23 @@
 
                             <div class="col-12 mt-4 d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
                                 <h6 class="fw-bold small text-primary mb-0">2. Narasi & Argumen</h6>
-                                @if($triwulan > 1)
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill py-0 px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-copy me-1"></i> Salin Narasi...
+                                <div class="d-flex align-items-center gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill py-1 px-3 btn-generate-formula" title="Otomatis susun rumus LaTeX dengan variabel X dan Y">
+                                        <i class="fas fa-calculator me-1"></i> Buat Rumus (X/Y)
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-                                        @for($i = 1; $i < $triwulan; $i++)
-                                        <li><a class="dropdown-item btn-copy-narasi small" href="#" data-tw="{{ $i }}">Dari Triwulan {{ $i }}</a></li>
-                                        @endfor
-                                    </ul>
+                                    @if($triwulan > 1)
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill py-1 px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-copy me-1"></i> Salin Narasi...
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                                            @for($i = 1; $i < $triwulan; $i++)
+                                            <li><a class="dropdown-item btn-copy-narasi small" href="#" data-tw="{{ $i }}">Dari Triwulan {{ $i }}</a></li>
+                                            @endfor
+                                        </ul>
+                                    </div>
+                                    @endif
                                 </div>
-                                @endif
                             </div>
 
                             <div class="col-12">
@@ -416,5 +421,30 @@
             });
         });
 
+        // Generate Formula Button (Variabel X & Y)
+        $(document).on('click', '.btn-generate-formula', function(e) {
+            e.preventDefault();
+            const rx = $('#realisasi_x').val() || '0';
+            const ry = $('#realisasi_y').val() || '0';
+            const rkum = $('#realisasi_kumulatif').val() || '0';
+            const targetVal = $('#modal-target').text() || '0';
+            const tw = '{{ $triwulan }}';
+            const th = '{{ $tahun }}';
+            const romanTw = tw == 1 ? 'I' : (tw == 2 ? 'II' : (tw == 3 ? 'III' : 'IV'));
+
+            const formulaHtml = `<p><strong>Target Triwulan ${romanTw} ${th}</strong></p>` +
+                `<p>$$y = \\frac{X}{Y} \\times 100\\% = \\frac{0}{${ry}} \\times 100\\% = ${targetVal} \\text{ persen}$$</p>` +
+                `<br>` +
+                `<p><strong>Realisasi Triwulan ${romanTw} ${th}</strong></p>` +
+                `<p>$$y = \\frac{X}{Y} \\times 100\\% = \\frac{${rx}}{${ry}} \\times 100\\% = ${rkum} \\text{ persen}$$</p>`;
+
+            if (window.tinymce && tinymce.get('target_realisasi')) {
+                tinymce.get('target_realisasi').setContent(formulaHtml);
+            } else {
+                $('#target_realisasi').val(formulaHtml);
+            }
+
+            toastr.success('Rumus LaTeX dengan variabel X dan Y berhasil dibuat!');
+        });
     </script>
 @endsection

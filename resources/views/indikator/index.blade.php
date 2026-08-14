@@ -96,7 +96,16 @@
                                     <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle rounded-pill px-2 mb-1">{{ $i->tipe ?: '-' }}</span>
                                     <div class="extra-small text-muted ps-1">{{ $i->satuan ?: '-' }}</div>
                                 </td>
-                                <td class="fw-bold text-primary">{{ $i->target_tahunan }}</td>
+                                <td>
+                                    <div class="fw-bold text-primary">{{ number_format($i->target_tahunan_efektif, 2) }}</div>
+                                    @php $pkModel = $i->pkTahunans->firstWhere('tahun', $i->tahun); @endphp
+                                    @if($pkModel)
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle rounded-pill extra-small"
+                                              title="Target terhubung otomatis dengan PK Tahunan {{ $i->tahun }}">
+                                            <i class="fas fa-handshake me-1"></i>PK {{ $pkModel->status_revisi ? '(Revisi)' : '' }}
+                                        </span>
+                                    @endif
+                                </td>
                                 <td>
                                     @if($i->pic)
                                         <div class="small fw-bold text-dark">{{ $i->pic->nama }}</div>

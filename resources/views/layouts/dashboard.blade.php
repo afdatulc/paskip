@@ -5,10 +5,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'KinerjaApp') }} - @yield('title')</title>
+    <title>{{ config('app.name', 'PASKIP') }} - @yield('title')</title>
 
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -22,16 +22,16 @@
 
     <style>
         :root {
-            --primary-color: #4361ee;
-            --secondary-color: #3f37c9;
-            --bg-dark: #1a1c23;
+            --primary-color: #0F172A;
+            --secondary-color: #334155;
+            --bg-dark: #0F172A;
             --sidebar-width: 260px;
             --sidebar-collapsed-width: 78px;
         }
 
         body {
-            font-family: 'Outfit', sans-serif;
-            background-color: #f8f9fa;
+            font-family: 'Inter', sans-serif;
+            background-color: #F8FAFC;
         }
 
         /* ===== SIDEBAR ===== */
@@ -65,7 +65,7 @@
             padding: 2rem;
             display: flex;
             flex-direction: column;
-            background-color: #f0f2f5;
+            background-color: #F8FAFC;
             transition: margin-left 0.3s cubic-bezier(.4, 0, .2, 1);
         }
 
@@ -79,23 +79,40 @@
 
         /* Sidebar Header */
         .sidebar-header {
-            padding: 1.5rem 1.2rem;
-            font-weight: 800;
-            font-size: 1.4rem;
-            color: #fff;
+            padding: 1.2rem 1.2rem;
             display: flex;
             align-items: center;
-            letter-spacing: -0.5px;
             white-space: nowrap;
-            justify-content: space-between;
+            height: 70px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.3s cubic-bezier(.4, 0, .2, 1);
         }
 
         .sidebar-brand {
             display: flex;
             align-items: center;
             text-decoration: none;
-            color: inherit;
+            color: #fff;
             overflow: hidden;
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            transition: all 0.3s;
+        }
+
+        .sidebar-brand .brand-icon {
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            background: rgba(67, 97, 238, 0.15);
+            border: 1px solid rgba(67, 97, 238, 0.25);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            margin-right: 10px;
+            transition: all 0.3s;
         }
 
         .sidebar-brand .brand-text {
@@ -103,32 +120,26 @@
             opacity: 1;
         }
 
+        #sidebar.collapsed .sidebar-header {
+            padding: 1.2rem 0;
+            justify-content: center;
+        }
+
+        #sidebar.collapsed .sidebar-brand {
+            justify-content: center;
+            width: 100%;
+        }
+
+        #sidebar.collapsed .sidebar-brand .brand-icon {
+            margin-right: 0 !important;
+            background: rgba(67, 97, 238, 0.25);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+
         #sidebar.collapsed .sidebar-brand .brand-text {
             opacity: 0;
             width: 0;
             overflow: hidden;
-        }
-
-        /* Hamburger Toggle */
-        .sidebar-toggle {
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 1.3rem;
-            cursor: pointer;
-            padding: 0.4rem;
-            border-radius: 8px;
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-
-        .sidebar-toggle:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        #sidebar.collapsed .sidebar-toggle {
-            margin: 0 auto;
         }
 
         /* Section Labels */
@@ -245,6 +256,70 @@
             opacity: 1;
         }
 
+        /* Sub Menu Links */
+        .nav-link .arrow-icon {
+            transition: transform 0.3s;
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+
+        .nav-link[aria-expanded="true"] .arrow-icon {
+            transform: rotate(180deg);
+        }
+        
+        .sub-menu {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+            margin: 0.2rem 0.8rem;
+            padding: 0.3rem 0;
+            overflow: hidden;
+        }
+        
+        #sidebar.collapsed .nav-link[data-bs-toggle="collapse"] {
+            pointer-events: none;
+        }
+        
+        #sidebar.collapsed .collapse {
+            display: none !important;
+        }
+        
+        #sidebar.collapsed .arrow-icon {
+            display: none;
+        }
+        
+        .sub-link {
+            padding: 0.5rem 1rem 0.5rem 3.2rem;
+            color: rgba(255, 255, 255, 0.6);
+            display: block;
+            text-decoration: none;
+            font-size: 0.82rem;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .sub-link::before {
+            content: '';
+            position: absolute;
+            left: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.2s;
+        }
+        
+        .sub-link:hover, .sub-link.active {
+            color: #fff;
+            background: var(--secondary-color);
+        }
+        
+        .sub-link:hover::before, .sub-link.active::before {
+            background: #fff;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+        }
+
         /* Sidebar Divider */
         .sidebar-divider {
             border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -257,19 +332,19 @@
 
         /* ===== GENERAL ===== */
         .card {
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             margin-bottom: 2rem;
             overflow: hidden;
         }
 
         .card-header {
             background: #fff;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid #E2E8F0;
             padding: 1.5rem;
             font-weight: 700;
-            color: #2b2d42;
+            color: #0F172A;
         }
 
         .user-profile-btn {
@@ -305,19 +380,19 @@
         }
 
         .bg-green {
-            background: linear-gradient(135deg, #2ec4b6, #218380);
+            background: #0F766E; /* Muted Teal */
         }
 
         .bg-yellow {
-            background: linear-gradient(135deg, #ff9f1c, #f17105);
+            background: #B45309; /* Muted Amber */
         }
 
         .bg-red {
-            background: linear-gradient(135deg, #e71d36, #9a031e);
+            background: #BE123C; /* Muted Crimson */
         }
 
         .bg-blue {
-            background: linear-gradient(135deg, #4361ee, #3f37c9);
+            background: #1E293B; /* Slate 800 */
         }
 
         .btn-primary {
@@ -430,12 +505,11 @@
     <div id="sidebar" class="d-flex flex-column">
         <div class="sidebar-header">
             <a href="/" class="sidebar-brand">
-                <i class="fas fa-chart-line me-2 text-primary" style="font-size:1.3rem;"></i>
-                <span class="brand-text">Kinerja-App</span>
+                <div class="brand-icon">
+                    <i class="fas fa-shield-halved text-primary"></i>
+                </div>
+                <span class="brand-text">PASKIP</span>
             </a>
-            <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
-                <i class="fas fa-bars"></i>
-            </button>
         </div>
 
         <div class="flex-grow-1">
@@ -445,139 +519,109 @@
                     <i class="fas fa-gauge-high"></i> <span class="link-text">Dashboard</span>
                 </a>
 
-                @if (auth()->user()->isAdmin())
-                    <a href="{{ route('indikator.index') }}"
-                        class="nav-link {{ request()->routeIs('indikator.*') ? 'active' : '' }}" data-title="Indikator">
-                        <i class="fas fa-chart-bar"></i> <span class="link-text">Indikator</span>
+                {{-- Perencanaan Strategis --}}
+                @if(auth()->user()->isAdminOrPimpinan())
+                    @php $isRenstraActive = request()->routeIs('renstra.*') || request()->routeIs('pk-tahunan.*') || request()->routeIs('evaluasi-tahunan.*'); @endphp
+                    <a class="nav-link {{ $isRenstraActive ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseRenstra" role="button" aria-expanded="{{ $isRenstraActive ? 'true' : 'false' }}" aria-controls="collapseRenstra" data-title="Perencanaan">
+                        <i class="fas fa-compass"></i> <span class="link-text">Perencanaan Strategis</span>
+                        <i class="fas fa-chevron-down ms-auto arrow-icon"></i>
                     </a>
-                @else
-                    <a href="{{ route('indikator.index') }}"
-                        class="nav-link {{ request()->routeIs('indikator.*') ? 'active' : '' }}"
-                        data-title="Indikator Saya">
-                        <i class="fas fa-chart-bar"></i> <span class="link-text">Indikator Saya</span>
-                    </a>
+                    <div class="collapse {{ $isRenstraActive ? 'show' : '' }}" id="collapseRenstra">
+                        <div class="sub-menu">
+                            <a href="{{ route('renstra.index') }}" class="sub-link {{ request()->routeIs('renstra.*') ? 'active' : '' }}">Renstra</a>
+                            <a href="{{ route('pk-tahunan.index') }}" class="sub-link {{ request()->routeIs('pk-tahunan.*') ? 'active' : '' }}">PK Tahunan</a>
+                            <a href="{{ route('evaluasi-tahunan.index') }}" class="sub-link {{ request()->routeIs('evaluasi-tahunan.*') ? 'active' : '' }}">Evaluasi Tahunan</a>
+                        </div>
+                    </div>
                 @endif
 
-                @if (auth()->user()->isAdmin())
-                    <a href="{{ route('anggaran.index') }}"
-                        class="nav-link {{ request()->routeIs('anggaran.*') ? 'active' : '' }}" data-title="Master Anggaran">
-                        <i class="fas fa-money-bill-wave"></i> <span class="link-text">Master Anggaran</span>
-                    </a>
-                @endif
-
-                <a href="{{ route('kegiatan-master.index') }}"
-                    class="nav-link {{ request()->routeIs('kegiatan-master.*') ? 'active' : '' }}"
-                    data-title="{{ auth()->user()->isAdmin() ? 'Master Kegiatan' : 'Kegiatan Saya' }}">
-                    <i class="fas fa-clipboard-list"></i>
-                    <span
-                        class="link-text">{{ auth()->user()->isAdmin() ? 'Master Kegiatan' : 'Kegiatan Saya' }}</span>
+                {{-- Master Data --}}
+                @php 
+                    $isMasterActive = request()->routeIs('indikator.*') || request()->routeIs('anggaran.*') || request()->routeIs('kegiatan-master.*') || request()->routeIs('output-master.*') || request()->routeIs('pegawai.*') || request()->routeIs('tabel-ro.*'); 
+                @endphp
+                <a class="nav-link {{ $isMasterActive ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseMaster" role="button" aria-expanded="{{ $isMasterActive ? 'true' : 'false' }}" aria-controls="collapseMaster" data-title="Master Data">
+                    <i class="fas fa-database"></i> <span class="link-text">Master Data</span>
+                    <i class="fas fa-chevron-down ms-auto arrow-icon"></i>
                 </a>
+                <div class="collapse {{ $isMasterActive ? 'show' : '' }}" id="collapseMaster">
+                    <div class="sub-menu">
+                        <a href="{{ route('indikator.index') }}" class="sub-link {{ request()->routeIs('indikator.*') ? 'active' : '' }}">{{ auth()->user()->isAdmin() ? 'Master Indikator' : 'Indikator Saya' }}</a>
+                        @if (auth()->user()->isAdmin())
+                            <a href="{{ route('anggaran.index') }}" class="sub-link {{ request()->routeIs('anggaran.*') ? 'active' : '' }}">Master Anggaran</a>
+                        @endif
+                        <a href="{{ route('kegiatan-master.index') }}" class="sub-link {{ request()->routeIs('kegiatan-master.*') ? 'active' : '' }}">{{ auth()->user()->isAdmin() ? 'Master Kegiatan' : 'Kegiatan Saya' }}</a>
+                        <a href="{{ route('output-master.index') }}" class="sub-link {{ request()->routeIs('output-master.*') ? 'active' : '' }}">{{ auth()->user()->isAdmin() ? 'Master Output' : 'Output Saya' }}</a>
+                        @if (auth()->user()->isAdmin())
+                            <a href="{{ route('pegawai.index') }}" class="sub-link {{ request()->routeIs('pegawai.*') ? 'active' : '' }}">Master Pegawai</a>
+                            <a href="{{ route('tabel-ro.index') }}" class="sub-link {{ request()->routeIs('tabel-ro.*') ? 'active' : '' }}">Master RO</a>
+                        @endif
+                    </div>
+                </div>
 
-                <a href="{{ route('output-master.index') }}"
-                    class="nav-link {{ request()->routeIs('output-master.*') ? 'active' : '' }}"
-                    data-title="{{ auth()->user()->isAdmin() ? 'Master Output' : 'Output Saya' }}">
-                    <i class="fas fa-cubes"></i>
-                    <span class="link-text">{{ auth()->user()->isAdmin() ? 'Master Output' : 'Output Saya' }}</span>
+                {{-- Pengisian FRA --}}
+                @php 
+                    $isFraActive = request()->routeIs('capaian-kinerja.*') || request()->routeIs('evaluasi-kinerja.*') || request()->routeIs('analisis-kendala-baru.*') || request()->routeIs('pelaksanaan-rtl-baru.*');
+                @endphp
+                <a class="nav-link {{ $isFraActive ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseFra" role="button" aria-expanded="{{ $isFraActive ? 'true' : 'false' }}" aria-controls="collapseFra" data-title="Pengisian FRA">
+                    <i class="fas fa-pen-to-square"></i> <span class="link-text">Pengisian FRA</span>
+                    <i class="fas fa-chevron-down ms-auto arrow-icon"></i>
                 </a>
+                <div class="collapse {{ $isFraActive ? 'show' : '' }}" id="collapseFra">
+                    <div class="sub-menu">
+                        <a href="{{ route('capaian-kinerja.index') }}" class="sub-link {{ request()->routeIs('capaian-kinerja.*') ? 'active' : '' }}">Capaian Kinerja</a>
+                        <a href="{{ route('evaluasi-kinerja.index') }}" class="sub-link {{ request()->routeIs('evaluasi-kinerja.*') ? 'active' : '' }}">Evaluasi Kinerja</a>
+                        <a href="{{ route('analisis-kendala-baru.index') }}" class="sub-link {{ request()->routeIs('analisis-kendala-baru.*') ? 'active' : '' }}">Pengisian Analisis & Kendala (Baru)</a>
+                        <a href="{{ route('pelaksanaan-rtl-baru.index') }}" class="sub-link {{ request()->routeIs('pelaksanaan-rtl-baru.*') ? 'active' : '' }}">Pelaksanaan RTL (Baru)</a>
+                    </div>
+                </div>
 
-                <a href="{{ route('evaluasi-kinerja.index') }}"
-                    class="nav-link {{ request()->routeIs('evaluasi-kinerja.*') ? 'active' : '' }}"
-                    data-title="Evaluasi Kinerja">
-                    <i class="fas fa-chart-line"></i>
-                    <span class="link-text">Evaluasi Kinerja</span>
+                {{-- Monitoring --}}
+                @php 
+                    $isMonitoringActive = request()->routeIs('monitoring-capaian.*') || request()->routeIs('monitoring-rtl.*') || request()->routeIs('monitoring-manajerial.*') || request()->routeIs('analisis.*');
+                @endphp
+                <a class="nav-link {{ $isMonitoringActive ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseMonitoring" role="button" aria-expanded="{{ $isMonitoringActive ? 'true' : 'false' }}" aria-controls="collapseMonitoring" data-title="Monitoring">
+                    <i class="fas fa-display"></i> <span class="link-text">Monitoring</span>
+                    <i class="fas fa-chevron-down ms-auto arrow-icon"></i>
                 </a>
+                <div class="collapse {{ $isMonitoringActive ? 'show' : '' }}" id="collapseMonitoring">
+                    <div class="sub-menu">
+                        <a href="{{ route('monitoring-capaian.index') }}" class="sub-link {{ request()->routeIs('monitoring-capaian.*') ? 'active' : '' }}">Monitoring Capaian</a>
+                        <a href="{{ route('monitoring-rtl.index') }}" class="sub-link {{ request()->routeIs('monitoring-rtl.*') ? 'active' : '' }}">Monitoring RTL</a>
+                        @if(auth()->user()->isAdmin())
+                            <a href="{{ route('monitoring-manajerial.index') }}" class="sub-link {{ request()->routeIs('monitoring-manajerial.*') ? 'active' : '' }}">Monitoring Manajerial</a>
+                            <a href="{{ route('analisis.index') }}" class="sub-link {{ request()->routeIs('analisis.*') ? 'active' : '' }}">Analisis & Kendala</a>
+                        @endif
+                    </div>
+                </div>
 
-                <a href="{{ route('capaian-kinerja.index') }}"
-                    class="nav-link {{ request()->routeIs('capaian-kinerja.*') ? 'active' : '' }}"
-                    data-title="Capaian Kinerja">
-                    <i class="fas fa-award"></i>
-                    <span class="link-text">Capaian Kinerja</span>
+                {{-- Lainnya --}}
+                @php 
+                    $isLainnyaActive = request()->routeIs('rekap.capaian') || request()->routeIs('template.word.*');
+                @endphp
+                <a class="nav-link {{ $isLainnyaActive ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseLainnya" role="button" aria-expanded="{{ $isLainnyaActive ? 'true' : 'false' }}" aria-controls="collapseLainnya" data-title="Lainnya">
+                    <i class="fas fa-bars-staggered"></i> <span class="link-text">Lainnya</span>
+                    <i class="fas fa-chevron-down ms-auto arrow-icon"></i>
                 </a>
-
-                <a href="{{ route('monitoring-capaian.index') }}"
-                    class="nav-link {{ request()->routeIs('monitoring-capaian.*') ? 'active' : '' }}"
-                    data-title="Monitoring Capaian">
-                    <i class="fas fa-search-plus"></i>
-                    <span class="link-text">Monitoring Capaian</span>
-                </a>
-
-                <a href="{{ route('monitoring-rtl.index') }}"
-                    class="nav-link {{ request()->routeIs('monitoring-rtl.*') ? 'active' : '' }}"
-                    data-title="Monitoring RTL">
-                    <i class="fas fa-clipboard-check"></i>
-                    <span class="link-text">Monitoring RTL</span>
-                </a>
-
-                @if(auth()->user()->isAdmin())
-                    <a href="{{ route('monitoring-manajerial.index') }}"
-                        class="nav-link {{ request()->routeIs('monitoring-manajerial.*') ? 'active' : '' }}"
-                        data-title="Monitoring Manajerial">
-                        <i class="fas fa-chart-pie"></i>
-                        <span class="link-text">Monitoring Manajerial</span>
-                    </a>
-                @endif
-
-                <a href="{{ route('riwayat-kendala.index') }}"
-                    class="nav-link {{ request()->routeIs('riwayat-kendala.*') ? 'active' : '' }}"
-                    data-title="Riwayat Kendala">
-                    <i class="fas fa-history"></i>
-                    <span class="link-text">Riwayat Kendala</span>
-                </a>
-
-                @if (auth()->user()->isAdmin())
-                    <a href="{{ route('pegawai.index') }}"
-                        class="nav-link {{ request()->routeIs('pegawai.*') ? 'active' : '' }}"
-                        data-title="Master Pegawai">
-                        <i class="fas fa-users-gear"></i> <span class="link-text">Master Pegawai</span>
-                    </a>
-                    <a href="{{ route('tabel-ro.index') }}"
-                        class="nav-link {{ request()->routeIs('tabel-ro.*') ? 'active' : '' }}"
-                        data-title="Master RO">
-                        <i class="fas fa-list-check"></i> <span class="link-text">Master RO</span>
-                    </a>
-                    <a href="{{ route('template.word.index') }}"
-                        class="nav-link {{ request()->routeIs('template.word.*') ? 'active' : '' }}"
-                        data-title="Template Word">
-                        <i class="fas fa-file-word"></i> <span class="link-text">Template Word</span>
-                    </a>
-                    <a href="{{ route('analisis.index') }}"
-                        class="nav-link {{ request()->routeIs('analisis.*') ? 'active' : '' }}"
-                        data-title="Analisis & Kendala">
-                        <i class="fas fa-magnifying-glass-chart"></i> <span class="link-text">Analisis & Kendala</span>
-                    </a>
-                @endif
-
-                <a href="{{ route('admin.evidence.index') }}"
-                    class="nav-link {{ request()->routeIs('admin.evidence.*') ? 'active' : '' }}"
-                    data-title="Galeri Bukti Dukung">
-                    <i class="fas fa-photo-film"></i> <span class="link-text">Galeri Bukti Dukung</span>
-                </a>
-
-                <a href="{{ route('admin.aktivitas.index') }}"
-                    class="nav-link {{ request()->routeIs('admin.aktivitas.*') ? 'active' : '' }}"
-                    data-title="{{ auth()->user()->isAdmin() ? 'Aktivitas Seluruh' : 'Riwayat Aktivitas' }}">
-                    <i class="fas fa-clock-rotate-left"></i>
-                    <span
-                        class="link-text">{{ auth()->user()->isAdmin() ? 'Aktivitas Seluruh' : 'Riwayat Aktivitas Saya' }}</span>
-                </a>
-
-                <a href="{{ route('rekap.capaian') }}"
-                    class="nav-link {{ request()->routeIs('rekap.capaian') ? 'active' : '' }}"
-                    data-title="Rekap Capaian">
-                    <i class="fas fa-trophy"></i> <span class="link-text">Rekap Capaian Kinerja</span>
-                </a>
-
-                <a href="{{ route('notulen.index') }}"
-                    class="nav-link {{ request()->routeIs('notulen.*') ? 'active' : '' }}" data-title="Buat Notulen">
-                    <i class="fas fa-file-pen"></i> <span class="link-text">Buat Notulen</span>
-                </a>
+                <div class="collapse {{ $isLainnyaActive ? 'show' : '' }}" id="collapseLainnya">
+                    <div class="sub-menu">
+                        <a href="{{ route('rekap.capaian') }}" class="sub-link {{ request()->routeIs('rekap.capaian') ? 'active' : '' }}">Rekap Capaian Kinerja</a>
+                        @if (auth()->user()->isAdmin())
+                            <a href="{{ route('template.word.index') }}" class="sub-link {{ request()->routeIs('template.word.*') ? 'active' : '' }}">Template Word</a>
+                        @endif
+                    </div>
+                </div>
             </nav>
         </div>
     </div>
 
     <div id="content">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold">@yield('title')</h4>
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-white bg-white shadow-sm border rounded-3 p-2 text-dark d-flex align-items-center justify-content-center" id="sidebarToggle" title="Toggle Sidebar" style="width: 38px; height: 38px;">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h4 class="fw-bold mb-0">@yield('title')</h4>
+            </div>
             <div class="user-info dropdown">
                 <div class="user-profile-btn d-flex align-items-center" data-bs-toggle="dropdown"
                     style="cursor: pointer;">
@@ -649,8 +693,7 @@
 
         <footer class="text-center pt-5">
             <hr class="opacity-10 mb-4">
-            &copy; {{ date('Y') }} <span class="text-primary fw-bold">Kinerja-App</span> - Monitoring Kinerja
-            Terpadu
+            &copy; {{ date('Y') }} <span class="text-primary fw-bold">PASKIP</span> - Patrol SAKIP
         </footer>
     </div>
 
@@ -890,7 +933,7 @@
                                         items: [{
                                             type: 'textarea',
                                             name: 'latex',
-                                            label: 'LaTeX Syntax (e.g. \\frac{n}{N} \\times 100%)'
+                                            label: 'LaTeX Syntax (e.g. \\frac{X}{Y} \\times 100%)'
                                         },
                                         {
                                             type: 'htmlpanel',
