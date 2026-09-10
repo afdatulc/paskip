@@ -5,31 +5,26 @@ namespace App\Http\Controllers;
 use App\Models\Indikator;
 use App\Models\CapaianKinerja;
 use Illuminate\Http\Request;
+use App\Services\CapaianCalculator;
 
 class MonitoringCapaianController extends Controller
 {
     public function index(Request $request)
     {
-        $tahun = $request->get('tahun', \App\Models\Setting::get('default_tahun', date('Y')));
-        $triwulan = $request->get('triwulan', \App\Models\Setting::get('default_triwulan', min(ceil(date('n') / 3), 4)));
+        $tahun = $request->get('tahun', session('global_tahun', date('Y')));
+        $triwulan = $request->get('triwulan', session('global_triwulan', min(ceil(date('n') / 3), 4)));
 
-        $indikators = Indikator::visibleTo(auth()->user())
-            ->with(['realisasis' => function ($query) use ($triwulan) {
+        // Get Indicators with Realisasi (All users can see all IKU in Monitoring)
+        $indikators = Indikator::with(['realisasis' => function ($query) use ($triwulan) {
                 $query->where('triwulan', $triwulan);
-            }, 'analisis' => function ($query) use ($triwulan) {
-                $query->where('triwulan', $triwulan);
-            }, 'issues' => function ($query) use ($triwulan) {
-                $query->where('triwulan', $triwulan)->with('rtls');
-            }])
+            }, 'pkTahunans' => function ($query) use ($tahun) {
+                $query->where('tahun', $tahun);
+            }, 'target'])
             ->orderBy('kode')
             ->get();
 
-        $capaians = CapaianKinerja::where('tahun', $tahun)
-            ->where('triwulan', $triwulan)
-            ->whereIn('indikator_id', $indikators->pluck('id'))
-            ->get()
-            ->keyBy('indikator_id');
+        $accessibleIndikatorIds = Indikator::visibleTo(auth()->user())->pluck('id')->toArray();
 
-        return view('monitoring_capaian.index', compact('indikators', 'capaians', 'tahun', 'triwulan'));
+        return view('monitoring_capaian.index', compact('indikators', 'tahun', 'triwulan', 'accessibleIndikatorIds'));
     }
 }

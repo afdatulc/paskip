@@ -14,7 +14,7 @@ class EvaluasiTahunanController extends Controller
      */
     public function index(Request $request)
     {
-        $tahun = $request->get('tahun', \App\Models\Setting::get('default_tahun', date('Y')));
+        $tahun = $request->get('tahun', session('global_tahun', date('Y')));
 
         $pkTahunans = PkTahunan::where('tahun', $tahun)
             ->with(['indikator', 'evaluasiTahunan'])

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERD PASKIP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background: #f4f6f9;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: inline-block;
+            margin-top: 20px;
+        }
+        h2 {
+            color: #333;
+        }
+        .btn {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: #0d6efd;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+        .btn:hover {
+            background-color: #0b5ed7;
+        }
+        #mermaid-diagram {
+            margin-top: 20px;
+        }
+    </style>
+    <!-- Import Mermaid -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <h2>Entity-Relationship Diagram (ERD) PASKIP</h2>
+    <p>Di bawah ini adalah diagram struktur tabel database terbaru Anda.</p>
+    
+    <button class="btn" onclick="downloadSVG()">⬇️ Download ERD (SVG)</button>
+    
+    <div class="container">
+        <!-- Teks Mermaid yang akan di-render otomatis menjadi gambar -->
+        <pre class="mermaid" id="mermaid-diagram">
+erDiagram
+    users {
+        INTEGER id PK
+        varchar name
+        varchar email
+        datetime email_verified_at
+        varchar password
+        varchar remember_token
+        datetime created_at
+        datetime updated_at
+        varchar role
+        INTEGER pegawai_id
+    }
+    users }|--|| pegawais : "pegawai_id -> id"
+
+    pegawais {
+        INTEGER id PK
+        varchar nip
+        varchar nama
+        varchar jabatan
+        varchar pangkat_golongan
+        varchar no_hp
+        datetime created_at
+        datetime updated_at
+    }
+
+    indikators {
+        INTEGER id PK
+        TEXT tujuan
+        TEXT sasaran
+        varchar indikator_kinerja
+        varchar jenis_indikator
+        varchar periode
+        varchar tipe
+        varchar satuan
+        numeric target_tahunan
+        INTEGER tahun
+        datetime created_at
+        datetime updated_at
+        varchar kode
+        INTEGER pic_id
+        TEXT dasar_hitung
+        varchar definisi_x
+        varchar definisi_y
+        TEXT basis_data
+        varchar kode_tujuan
+        varchar kode_sasaran
+        varchar kode_indikator_kinerja
+        numeric target_tahunan_x
+        numeric target_tahunan_y
+        varchar polarisasi
+    }
+    indikators }|--|| pegawais : "pic_id -> id"
+
+    targets {
+        INTEGER id PK
+        INTEGER indikator_id
+        INTEGER triwulan
+        numeric target_triwulan
+        numeric target_x
+        numeric target_y
+        datetime created_at
+        datetime updated_at
+    }
+    targets }|--|| indikators : "indikator_id -> id"
+
+    realisasis {
+        INTEGER id PK
+        INTEGER indikator_id
+        INTEGER triwulan
+        numeric realisasi_kumulatif
+        numeric realisasi_x
+        numeric realisasi_y
+        datetime created_at
+        datetime updated_at
+    }
+    realisasis }|--|| indikators : "indikator_id -> id"
+
+    capaian_kinerjas {
+        INTEGER id PK
+        INTEGER indikator_id
+        INTEGER tahun
+        INTEGER triwulan
+        varchar link_bukti_kinerja
+        varchar link_bukti_tindak_lanjut
+        TEXT penjelasan_lainnya
+        TEXT dasar_hitung
+        TEXT argumen_logis
+        TEXT target_realisasi
+        datetime created_at
+        datetime updated_at
+    }
+    capaian_kinerjas }|--|| indikators : "indikator_id -> id"
+
+    tabel_ros {
+        INTEGER id PK
+        INTEGER indikator_id
+        INTEGER tahun
+        INTEGER triwulan
+        varchar ro
+        numeric realisasi_volume_ro
+        numeric progres_ro
+        numeric pagu_awal
+        numeric pagu_revisi
+        numeric pagu_sisa
+        numeric pagu_realisasi
+        datetime created_at
+        datetime updated_at
+    }
+    tabel_ros }|--|| indikators : "indikator_id -> id"
+
+    indikator_anggarans {
+        INTEGER id PK
+        INTEGER indikator_id
+        INTEGER tahun
+        numeric pagu_awal
+        numeric pagu_revisi
+        numeric realisasi_tw1
+        numeric realisasi_tw2
+        numeric realisasi_tw3
+        numeric realisasi_tw4
+        varchar kode_kegiatan
+        varchar nama_kegiatan
+        varchar kode_ro
+        varchar nama_ro
+        datetime created_at
+        datetime updated_at
+    }
+    indikator_anggarans }|--|| indikators : "indikator_id -> id"
+
+    sasaran_anggarans {
+        INTEGER id PK
+        varchar kode
+        INTEGER tahun
+        numeric pagu_awal
+        numeric pagu_revisi
+        numeric realisasi_tw1
+        numeric realisasi_tw2
+        numeric realisasi_tw3
+        numeric realisasi_tw4
+        varchar kode_kegiatan
+        varchar nama_kegiatan
+        varchar kode_ro
+        varchar nama_ro
+        datetime created_at
+        datetime updated_at
+    }
+
+    renstras {
+        INTEGER id PK
+        INTEGER tahun_awal
+        INTEGER tahun_akhir
+        varchar status
+        TEXT deskripsi
+        datetime created_at
+        datetime updated_at
+    }
+
+    target_renstras {
+        INTEGER id PK
+        INTEGER renstra_id
+        INTEGER indikator_id
+        INTEGER tahun
+        numeric target
+        datetime created_at
+        datetime updated_at
+    }
+    target_renstras }|--|| indikators : "indikator_id -> id"
+    target_renstras }|--|| renstras : "renstra_id -> id"
+
+    pk_tahunans {
+        INTEGER id PK
+        INTEGER indikator_id
+        INTEGER tahun
+        numeric target_awal
+        numeric target_revisi
+        tinyint status_revisi
+        TEXT alasan_revisi
+        datetime created_at
+        datetime updated_at
+    }
+    pk_tahunans }|--|| indikators : "indikator_id -> id"
+
+    evaluasi_tahunans {
+        INTEGER id PK
+        INTEGER pk_tahunan_id
+        numeric realisasi_akhir
+        numeric capaian_persentase
+        TEXT analisis_hasil
+        tinyint rekomendasi_revisi
+        TEXT catatan_revisi
+        datetime created_at
+        datetime updated_at
+    }
+    evaluasi_tahunans }|--|| pk_tahunans : "pk_tahunan_id -> id"
+
+    kendala_rtls {
+        INTEGER id PK
+        INTEGER indikator_id
+        INTEGER triwulan
+        INTEGER tahun
+        TEXT kendala
+        TEXT solusi
+        TEXT rtl
+        date batas_waktu
+        varchar pic_nip
+        varchar status
+        datetime created_at
+        datetime updated_at
+    }
+    kendala_rtls }|--|| indikators : "indikator_id -> id"
+
+    kendala_rtl_executions {
+        INTEGER id PK
+        INTEGER kendala_rtl_id
+        TEXT narasi_tindak_lanjut
+        date tanggal_pelaksanaan
+        tinyint is_dokumentasi_ada
+        tinyint is_timestamp_ada
+        varchar foto_bukti
+        varchar pegawai_nip
+        datetime created_at
+        datetime updated_at
+    }
+    kendala_rtl_executions }|--|| kendala_rtls : "kendala_rtl_id -> id"
+
+    realisasi_logs {
+        INTEGER id PK
+        INTEGER realisasi_id
+        INTEGER user_id
+        float old_value
+        float new_value
+        varchar action
+        datetime created_at
+        datetime updated_at
+    }
+    realisasi_logs }|--|| users : "user_id -> id"
+    realisasi_logs }|--|| realisasis : "realisasi_id -> id"
+
+    indikator_media {
+        INTEGER id PK
+        INTEGER indikator_id
+        varchar field
+        varchar file_path
+        varchar original_name
+        varchar mime_type
+        INTEGER file_size
+        datetime created_at
+        datetime updated_at
+    }
+    indikator_media }|--|| indikators : "indikator_id -> id"
+        </pre>
+    </div>
+
+    <script>
+        // Fungsi untuk mengunduh diagram SVG
+        function downloadSVG() {
+            const svgElement = document.querySelector('.mermaid svg');
+            if (!svgElement) {
+                alert('Gambar sedang dimuat, tunggu sebentar...');
+                return;
+            }
+            const svgData = new XMLSerializer().serializeToString(svgElement);
+            const blob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "erd_paskip.svg";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        }
+    </script>
+</body>
+</html>

@@ -261,7 +261,6 @@
         @foreach($indikators as $index => $indikator)
             @php
                 $realisasi = $indikator->realisasis->first();
-                $analisis = $indikator->analisis->first();
                 $capaianData = $indikator->capaianKinerjas->first();
 
                 $targetField = 'target_tw' . $validated['triwulan'];
@@ -278,41 +277,53 @@
                     $capaian_tahunan = 120;
 
                 $anggarans = $indikator->anggarans;
-                $issues = $indikator->issues;
+
+                // Kendala, Solusi, RTL
+                $issues = \App\Models\KendalaRtl::where('indikator_id', $indikator->id)
+                    ->where('tahun', $validated['tahun'])
+                    ->where('triwulan', $validated['triwulan'])
+                    ->with('pic')
+                    ->orderBy('created_at', 'asc')
+                    ->get();
+                
                 $kendalas = [];
                 $solusis = [];
                 $rtlsDesc = [];
                 $rtlsPic = [];
                 $rtlsBatas = [];
 
+                $parseLines = function ($text) {
+                    if (!$text) return [];
+                    $lines = explode("\n", html_entity_decode(strip_tags($text)));
+                    $result = [];
+                    foreach ($lines as $line) {
+                        $line = preg_replace('/^[-•*\s]+/', '', trim($line));
+                        if ($line !== '') {
+                            $result[] = $line;
+                        }
+                    }
+                    return $result;
+                };
+
                 foreach ($issues as $issue) {
-                    if ($issue->deskripsi) {
-                        $lines = explode("\n", strip_tags($issue->deskripsi));
-                        foreach ($lines as $l)
-                            if (trim($l))
-                                $kendalas[] = trim(preg_replace('/^[-•*\s]+/', '', $l));
+                    if ($issue->kendala) {
+                        $kendalas = array_merge($kendalas, $parseLines($issue->kendala));
                     }
-                    if ($issue->solusi_sementara) {
-                        $lines = explode("\n", strip_tags($issue->solusi_sementara));
-                        foreach ($lines as $l)
-                            if (trim($l))
-                                $solusis[] = trim(preg_replace('/^[-•*\s]+/', '', $l));
+                    if ($issue->solusi) {
+                        $solusis = array_merge($solusis, $parseLines($issue->solusi));
                     }
-                    foreach ($issue->rtls as $rtl) {
-                        if ($rtl->deskripsi_rtl) {
-                            $lines = explode("\n", strip_tags($rtl->deskripsi_rtl));
-                            foreach ($lines as $l)
-                                if (trim($l))
-                                    $rtlsDesc[] = trim(preg_replace('/^[-•*\s]+/', '', $l));
-                        }
-                        if ($rtl->pic_nip) {
-                            $rtlsPic[] = $rtl->pic ? $rtl->pic->nama : $rtl->pic_nip;
-                        }
-                        if ($rtl->due_date) {
-                            $rtlsBatas[] = \Carbon\Carbon::parse($rtl->due_date)->locale('id')->translatedFormat('d F Y');
-                        }
+                    if ($issue->rtl) {
+                        $rtlsDesc = array_merge($rtlsDesc, $parseLines($issue->rtl));
+                    }
+                    if ($issue->pic_nip) {
+                        $picName = $issue->pic ? $issue->pic->nama : $issue->pic_nip;
+                        $rtlsPic[] = $picName;
+                    }
+                    if ($issue->batas_waktu) {
+                        $rtlsBatas[] = \Carbon\Carbon::parse($issue->batas_waktu)->locale('id')->translatedFormat('d F Y');
                     }
                 }
+
             @endphp
 
             <div>

@@ -10,24 +10,13 @@
                     data-bs-target="#modalPegawai">
                     <i class="fas fa-plus me-1"></i> Tambah Pegawai
                 </button>
-                <a href="{{ route('pegawai.template') }}" class="btn btn-outline-success rounded-pill px-3 ms-2 fw-bold">
-                    <i class="fas fa-download me-1"></i> Template
-                </a>
                 <button type="button" class="btn btn-info rounded-pill px-3 ms-2 fw-bold text-white" id="btnSyncApi">
                     <i class="fas fa-sync-alt me-1"></i> Sync IPIN
                 </button>
             </div>
-            <form action="{{ route('pegawai.import') }}" method="POST" enctype="multipart/form-data"
-                class="d-flex align-items-center">
-                @csrf
-                <div class="input-group input-group-sm">
-                    <input type="file" name="file" class="form-control rounded-start-pill border-success"
-                        style="width: 150px;" required>
-                    <button type="submit" class="btn btn-success rounded-end-pill px-3">
-                        <i class="fas fa-upload me-1"></i> Import
-                    </button>
-                </div>
-            </form>
+            <button type="button" class="btn btn-success rounded-pill px-4 shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalImportPegawai">
+                <i class="fas fa-upload me-1"></i> Import Pegawai
+            </button>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -115,6 +104,41 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Import Pegawai -->
+    <div class="modal fade" id="modalImportPegawai" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Import Data Pegawai</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('pegawai.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body p-4">
+                        <div class="alert alert-info border-0 rounded-4 shadow-sm mb-4">
+                            <div class="small fw-bold"><i class="fas fa-info-circle me-1"></i> Silakan unduh template Excel terlebih dahulu, lalu isi data pegawai.</div>
+                        </div>
+                        <div class="mb-4 text-center">
+                            <a href="{{ route('pegawai.template') }}" class="btn btn-outline-success rounded-pill px-4 fw-bold">
+                                <i class="fas fa-download me-1"></i> Download Template Pegawai
+                            </a>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Upload File Excel (.xlsx)</label>
+                            <input type="file" name="file" class="form-control rounded-3 border-light-subtle" required accept=".xlsx, .xls, .csv">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-success rounded-pill px-4 shadow-sm fw-bold">
+                            <i class="fas fa-upload me-1"></i> Import
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -317,71 +341,107 @@
 
             // Activate Account Click
             $(document).on('click', '.activate-pegawai', function () {
-                if (!confirm('Aktifkan akun user untuk pegawai ini?')) return;
                 const id = $(this).data('id');
                 const btn = $(this);
 
-                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+                Swal.fire({
+                    title: 'Konfirmasi',
+                    text: "Aktifkan akun user untuk pegawai ini?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, Aktifkan',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
 
-                $.ajax({
-                    url: `{{ url('pegawai') }}/${id}/activate`,
-                    method: 'POST',
-                    data: { _token: "{{ csrf_token() }}" },
-                    success: function (response) {
-                        toastr.success(response.message);
-                        setTimeout(() => location.reload(), 1500);
-                    },
-                    error: function (xhr) {
-                        btn.prop('disabled', false).html('<i class="fas fa-user-plus"></i>');
-                        const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Gagal mengaktifkan akun.';
-                        toastr.error(msg);
+                        $.ajax({
+                            url: `{{ url('pegawai') }}/${id}/activate`,
+                            method: 'POST',
+                            data: { _token: "{{ csrf_token() }}" },
+                            success: function (response) {
+                                toastr.success(response.message);
+                                setTimeout(() => location.reload(), 1500);
+                            },
+                            error: function (xhr) {
+                                btn.prop('disabled', false).html('<i class="fas fa-user-plus"></i>');
+                                const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Gagal mengaktifkan akun.';
+                                toastr.error(msg);
+                            }
+                        });
                     }
                 });
             });
 
             // Delete Button Click
             $(document).on('click', '.delete-pegawai', function () {
-                if (!confirm('Hapus data pegawai ini?')) return;
                 const id = $(this).data('id');
                 const row = $(`#row-${id}`);
 
-                $.ajax({
-                    url: `{{ url('pegawai') }}/${id}`,
-                    method: 'POST',
-                    data: {
-                        _token: "{{ csrf_token() }}",
-                        _method: 'DELETE'
-                    },
-                    success: function (response) {
-                        toastr.success(response.message);
-                        row.fadeOut(function () { $(this).remove(); });
-                    },
-                    error: function () {
-                        toastr.error('Gagal menghapus data.');
+                Swal.fire({
+                    title: 'Konfirmasi Hapus',
+                    text: "Hapus data pegawai ini?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Hapus',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: `{{ url('pegawai') }}/${id}`,
+                            method: 'POST',
+                            data: {
+                                _token: "{{ csrf_token() }}",
+                                _method: 'DELETE'
+                            },
+                            success: function (response) {
+                                toastr.success(response.message);
+                                row.fadeOut(function () { $(this).remove(); });
+                            },
+                            error: function () {
+                                toastr.error('Gagal menghapus data.');
+                            }
+                        });
                     }
                 });
             });
 
             // Sync API Button Click
             $('#btnSyncApi').on('click', function () {
-                if (!confirm('Tarik data master pegawai terbaru dari API IPIN Tapin?')) return;
                 const btn = $(this);
                 const originalContent = btn.html();
 
-                btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Syncing...');
+                Swal.fire({
+                    title: 'Konfirmasi Sinkronisasi',
+                    text: "Tarik data master pegawai terbaru dari API IPIN Tapin?",
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, Tarik Data',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Syncing...');
 
-                $.ajax({
-                    url: "{{ route('pegawai.sync-api') }}",
-                    method: 'POST',
-                    data: { _token: "{{ csrf_token() }}" },
-                    success: function (response) {
-                        toastr.success(response.message);
-                        setTimeout(() => location.reload(), 2000);
-                    },
-                    error: function (xhr) {
-                        btn.prop('disabled', false).html(originalContent);
-                        const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Gagal sinkronisasi data.';
-                        toastr.error(msg);
+                        $.ajax({
+                            url: "{{ route('pegawai.sync-api') }}",
+                            method: 'POST',
+                            data: { _token: "{{ csrf_token() }}" },
+                            success: function (response) {
+                                toastr.success(response.message);
+                                setTimeout(() => location.reload(), 2000);
+                            },
+                            error: function (xhr) {
+                                btn.prop('disabled', false).html(originalContent);
+                                const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Gagal sinkronisasi data.';
+                                toastr.error(msg);
+                            }
+                        });
                     }
                 });
             });

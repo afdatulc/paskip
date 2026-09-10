@@ -21,9 +21,9 @@
                     <option value="notulen_capaian">Notulen Capaian Kinerja</option>
                     <option value="surat_undangan">Surat Undangan Rapat</option>
                     <option value="daftar_hadir">Daftar Hadir Peserta</option>
-                    <option value="notulen_pk">Notulen PK</option>
+                    <!-- <option value="notulen_pk">Notulen PK</option>
                     <option value="dokumen_sumber">Dokumen Sumber</option>
-                    <option value="bukti_tindak_lanjut">Bukti Tindak Lanjut</option>
+                    <option value="bukti_tindak_lanjut">Bukti Tindak Lanjut</option> -->
                 </select>
             </div>
         </div>
@@ -41,7 +41,7 @@
                     <strong>notulen_capkin.docx</strong> yang ada di storage/app/templates.
                 </div>
 
-                <form action="{{ route('template.word.export.notulen') }}" method="POST" target="_blank">
+                <form action="{{ route('template.word.export.notulen') }}" method="POST" onsubmit="this.target = this.format.value === 'html' ? '_blank' : '';">
                     @csrf
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -193,7 +193,7 @@
                 </h5>
             </div>
             <div class="card-body p-4">
-                <form action="{{ route('template.word.export.daftar-hadir') }}" method="POST" target="_blank">
+                <form action="{{ route('template.word.export.daftar-hadir') }}" method="POST">
                     @csrf
                     <div class="row g-3">
                         <div class="col-12">

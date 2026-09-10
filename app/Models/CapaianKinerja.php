@@ -19,10 +19,17 @@ class CapaianKinerja extends Model
         'dasar_hitung',
         'argumen_logis',
         'target_realisasi',
+        'status_approval',
+        'catatan_pimpinan',
     ];
 
     public function indikator()
     {
         return $this->belongsTo(Indikator::class);
+    }
+
+    public function histories()
+    {
+        return $this->hasMany(CapaianKinerjaHistory::class)->orderBy('created_at', 'desc');
     }
 }

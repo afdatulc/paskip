@@ -10,20 +10,9 @@
                 <p class="text-muted mb-0">Kelola pagu awal, pagu revisi, dan realisasi anggaran per Indikator Kinerja Utama (IKU)</p>
             </div> -->
             <div class="d-flex flex-wrap align-items-center gap-2">
-                <a href="{{ route('anggaran.template', ['tahun' => $tahun]) }}"
-                    class="btn btn-outline-success rounded-pill px-3 shadow-sm fw-bold" title="Download Template Excel">
-                    <i class="fas fa-download me-1"></i> Template
-                </a>
-                <form action="{{ route('anggaran.import') }}" method="POST" enctype="multipart/form-data" class="m-0">
-                    @csrf
-                    <div class="input-group input-group-sm shadow-sm">
-                        <input type="file" name="file" class="form-control rounded-start-pill border-success ps-3"
-                            style="width: 200px;" accept=".xlsx,.xls" required>
-                        <button type="submit" class="btn btn-success rounded-end-pill px-3 fw-bold">
-                            <i class="fas fa-upload me-1"></i> Import
-                        </button>
-                    </div>
-                </form>
+                <button type="button" class="btn btn-success rounded-pill px-3 fw-bold m-0" data-bs-toggle="modal" data-bs-target="#modalImportAnggaran">
+                    <i class="fas fa-upload me-1"></i> Import Anggaran
+                </button>
                 <form method="GET" action="{{ route('anggaran.index') }}"
                     class="d-flex align-items-center bg-white p-1 ps-3 rounded-pill shadow-sm border border-light-subtle m-0">
                     <label class="me-2 mb-0 small fw-bold text-muted">Tahun:</label>
@@ -332,4 +321,38 @@
             });
         });
     </script>
+    <!-- Modal Import Anggaran -->
+    <div class="modal fade" id="modalImportAnggaran" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Import Data Anggaran</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('anggaran.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body p-4">
+                        <div class="alert alert-info border-0 rounded-4 shadow-sm mb-4">
+                            <div class="small fw-bold"><i class="fas fa-info-circle me-1"></i> Silakan unduh template Excel terlebih dahulu, lalu isi data Master Anggaran & Realisasi.</div>
+                        </div>
+                        <div class="mb-4 text-center">
+                            <a href="{{ route('anggaran.template', ['tahun' => $tahun]) }}" class="btn btn-outline-success rounded-pill px-4 fw-bold">
+                                <i class="fas fa-download me-1"></i> Download Template Anggaran
+                            </a>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Upload File Excel (.xlsx)</label>
+                            <input type="file" name="file" class="form-control rounded-3 border-light-subtle" required accept=".xlsx, .xls, .csv">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">
+                            <i class="fas fa-upload me-1"></i> Import Data
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection

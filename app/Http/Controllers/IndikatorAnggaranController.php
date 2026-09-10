@@ -11,7 +11,7 @@ class IndikatorAnggaranController extends Controller
 {
     public function index(Request $request)
     {
-        $tahun = $request->get('tahun', \App\Models\Setting::get('default_tahun', date('Y')));
+        $tahun = $request->get('tahun', session('global_tahun', date('Y')));
         
         $indikators = Indikator::where('tahun', $tahun)
             ->with(['anggarans' => function($q) use ($tahun) {
@@ -134,7 +134,7 @@ class IndikatorAnggaranController extends Controller
 
     public function downloadTemplate(Request $request)
     {
-        $tahun = $request->get('tahun', \App\Models\Setting::get('default_tahun', date('Y')));
+        $tahun = $request->get('tahun', session('global_tahun', date('Y')));
         return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AnggaranTemplateExport($tahun), 'template_anggaran_'.$tahun.'.xlsx');
     }
 
@@ -147,8 +147,8 @@ class IndikatorAnggaranController extends Controller
         try {
             \Maatwebsite\Excel\Facades\Excel::import(new \App\Imports\AnggaranImport, $request->file('file'));
             return redirect()->back()->with('success', 'Data Anggaran & Realisasi berhasil diimport.');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat import: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Format file tidak sesuai template! (' . $e->getMessage() . ')');
         }
     }
 }

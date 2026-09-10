@@ -124,8 +124,8 @@ class HtmlToOoxml
             $tag === 'br' => '<w:r><w:br/></w:r>',
 
             // Lists
-            $tag === 'ol' => $this->processOrderedList($node, $runCtx),
-            $tag === 'ul' => $this->processUnorderedList($node, $runCtx),
+            $tag === 'ol' => $this->processOrderedList($node, array_merge($runCtx, $this->styleToCtx($parsed))),
+            $tag === 'ul' => $this->processUnorderedList($node, array_merge($runCtx, $this->styleToCtx($parsed))),
 
             // Inline formatting
             in_array($tag, ['strong', 'b']) => $this->processInline($node, array_merge($runCtx, ['bold' => true])),

@@ -76,7 +76,7 @@ class Indikator extends Model
      */
     public function scopeVisibleTo($query, $user)
     {
-        if ($user->isAdmin()) {
+        if ($user->isAdmin() || $user->isPimpinan()) {
             return $query;
         }
 
@@ -85,42 +85,46 @@ class Indikator extends Model
             return $query->whereRaw('1 = 0');
         }
 
-        return $query->where(function ($q) use ($pegawaiId) {
+        $userPegawai = $user->pegawai;
+
+        return $query->where(function ($q) use ($pegawaiId, $userPegawai) {
             $q->where('pic_id', $pegawaiId)
-              ->orWhereHas('kegiatanMasters', function ($q2) use ($pegawaiId) {
-                  $q2->where('ketua_tim_id', $pegawaiId)
-                     ->orWhereHas('anggotas', function ($q3) use ($pegawaiId) {
-                         $q3->where('pegawai_id', $pegawaiId);
+              ->orWhereHas('anggotas', function ($q2) use ($pegawaiId) {
+                  $q2->where('pegawai_id', $pegawaiId);
+              })
+              ->orWhereHas('kegiatanMasters', function ($q3) use ($pegawaiId) {
+                  $q3->where('ketua_tim_id', $pegawaiId)
+                     ->orWhereHas('anggotas', function ($q4) use ($pegawaiId) {
+                         $q4->where('pegawai_id', $pegawaiId);
                      });
               });
+
+            if ($userPegawai && $userPegawai->seksi) {
+                $q->orWhereHas('pic', function ($q5) use ($userPegawai) {
+                    $q5->where('seksi', $userPegawai->seksi);
+                });
+            }
         });
     }
-
-    public function outputRealisasis()
-    {
-        return $this->hasMany(OutputRealisasi::class);
-    }
-
-
 
     public function kegiatanMasters()
     {
         return $this->hasMany(KegiatanMaster::class);
     }
 
+    public function anggotas()
+    {
+        return $this->belongsToMany(Pegawai::class, 'indikator_anggota', 'indikator_id', 'pegawai_id')->withTimestamps();
+    }
+
+    public function kendalaRtls()
+    {
+        return $this->hasMany(KendalaRtl::class);
+    }
+
     public function outputMasters()
     {
         return $this->hasMany(OutputMaster::class);
-    }
-
-    public function analisis()
-    {
-        return $this->hasMany(Analisis::class);
-    }
-
-    public function issues()
-    {
-        return $this->hasMany(Issue::class);
     }
 
     public function capaianKinerjas()
@@ -193,15 +197,6 @@ class Indikator extends Model
         return 'danger';
     }
 
-    public function getOutputProgressAttribute()
-    {
-        $total = $this->output_masters_count ?? $this->outputMasters()->count();
-        $completed = $this->completed_outputs_count ?? $this->outputMasters()->where('is_achieved', true)->count();
-
-        if ($total == 0) return "-";
-        
-        return "{$completed}/{$total}";
-    }
 
     public function anggarans()
     {

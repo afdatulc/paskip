@@ -97,40 +97,28 @@
 
     {{-- Summary Cards --}}
     <div class="row g-3 mb-4">
-        <div class="col-md-2">
+        <div class="col-md-3">
             <div class="pk-summary-card bg-blue">
-                <div class="small opacity-75">Total PK</div>
+                <div class="small opacity-75">Total IKU PK</div>
                 <div class="fs-3 fw-bold">{{ $summary['total'] }}</div>
             </div>
         </div>
-        <div class="col-md-2">
-            <div class="pk-summary-card bg-green">
-                <div class="small opacity-75">Tercapai</div>
-                <div class="fs-3 fw-bold">{{ $summary['tercapai'] }}</div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="pk-summary-card bg-yellow">
-                <div class="small opacity-75">Perlu Perhatian</div>
-                <div class="fs-3 fw-bold">{{ $summary['perlu_perhatian'] }}</div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="pk-summary-card bg-red">
-                <div class="small opacity-75">Kritis</div>
-                <div class="fs-3 fw-bold">{{ $summary['kritis'] }}</div>
-            </div>
-        </div>
-        <div class="col-md-2">
+        <div class="col-md-3">
             <div class="pk-summary-card" style="background: linear-gradient(135deg, #7209b7, #560bad);">
-                <div class="small opacity-75">Direvisi</div>
+                <div class="small opacity-75">Target Direvisi</div>
                 <div class="fs-3 fw-bold">{{ $summary['direvisi'] }}</div>
             </div>
         </div>
-        <div class="col-md-2">
-            <div class="pk-summary-card" style="background: linear-gradient(135deg, #2b2d42, #1a1c23);">
-                <div class="small opacity-75">Rata² Capaian</div>
-                <div class="fs-3 fw-bold">{{ number_format($summary['rata_rata'], 1) }}%</div>
+        <div class="col-md-3">
+            <div class="pk-summary-card bg-green">
+                <div class="small opacity-75">Telah Direalisasi</div>
+                <div class="fs-3 fw-bold">{{ $summary['sudah_realisasi'] }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="pk-summary-card" style="background: linear-gradient(135deg, #4b5563, #374151);">
+                <div class="small opacity-75">Belum Direalisasi</div>
+                <div class="fs-3 fw-bold">{{ $summary['belum_realisasi'] }}</div>
             </div>
         </div>
     </div>
@@ -145,7 +133,7 @@
                 <table class="table table-hover mb-2 align-middle" id="tablePK">
                     <thead class="bg-light">
                         <tr>
-                            <th class="ps-4" style="width: 40px;">No</th>
+                            <th class="text-center" style="width: 40px;">No</th>
                             <th style="min-width: 280px;">Indikator Kinerja</th>
                             <th class="text-center">Target Awal</th>
                             <th class="text-center">Target Revisi</th>
@@ -160,7 +148,7 @@
                     <tbody>
                         @forelse($pkTahunans as $i => $pk)
                             <tr>
-                                <td class="ps-4 text-muted">{{ $i + 1 }}</td>
+                                <td class="text-center">{{ $loop->iteration }}</td>
                                 <td>
                                     <div class="fw-bold small">{{ $pk->indikator->kode ?? '' }}</div>
                                     <div class="small text-dark">{{ $pk->indikator->indikator_kinerja }}</div>
@@ -261,17 +249,17 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body p-4">
-                            <div class="bg-light rounded-4 p-3 mb-3 border-0">
+                            <div class="mb-4 pb-3 border-bottom border-light">
                                 <div class="extra-small fw-bold text-muted text-uppercase mb-1">Indikator Kinerja</div>
-                                <div class="fw-bold text-dark small mb-2">{{ $pk->indikator->indikator_kinerja }}</div>
+                                <div class="fw-bold text-dark mb-3">{{ $pk->indikator->indikator_kinerja }}</div>
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="bg-white rounded-3 px-3 py-1 border border-light shadow-sm">
+                                    <div class="bg-light rounded-3 px-3 py-1 border border-light shadow-sm">
+                                        <span class="extra-small text-muted d-block">Target Renstra</span>
+                                        <span class="fw-bold text-primary small">{{ number_format($pk->target_awal, 2) }}</span>
+                                    </div>
+                                    <div class="bg-light rounded-3 px-3 py-1 border border-light shadow-sm">
                                         <span class="extra-small text-muted d-block">Satuan</span>
                                         <span class="fw-bold text-dark small">{{ $pk->indikator->satuan }}</span>
-                                    </div>
-                                    <div class="bg-white rounded-3 px-3 py-1 border border-light shadow-sm">
-                                        <span class="extra-small text-muted d-block">Target Awal Renstra</span>
-                                        <span class="fw-bold text-primary small">{{ number_format($pk->target_awal, 2) }}</span>
                                     </div>
                                 </div>
                             </div>

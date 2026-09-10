@@ -3,118 +3,134 @@
 @section('title', 'Monitoring Capaian Kinerja')
 
 @section('content')
-    <div class="d-flex justify-content-between align-items-end mb-4">
-        <div>
-            <h4 class="fw-bold text-dark mb-1">Monitoring Pengisian Capaian Kinerja</h4>
-            <div class="text-muted small">Pantau kelengkapan pengisian data capaian untuk setiap indikator.</div>
+    <!-- Filter Card -->
+    <div class="card mb-4 shadow-sm border-0 rounded-4">
+        <div class="card-body">
+            <form action="{{ route('monitoring-capaian.index') }}" method="GET" class="d-flex gap-3 align-items-end flex-wrap">
+                <div>
+                    <label class="form-label text-muted small fw-bold mb-1">Tahun</label>
+                <select name="tahun" class="form-select" style="width: 120px;" onchange="this.form.submit()">
+                    @php $currentYear = date('Y'); @endphp
+                    @for($i = $currentYear - 2; $i <= $currentYear + 2; $i++)
+                        <option value="{{ $i }}" {{ $tahun == $i ? 'selected' : '' }}>{{ $i }}</option>
+                    @endfor
+                </select>
+            </div>
+            <div>
+                <label class="form-label text-muted small fw-bold mb-1">Triwulan</label>
+                <select name="triwulan" class="form-select" onchange="this.form.submit()">
+                    <option value="1" {{ $triwulan == 1 ? 'selected' : '' }}>Triwulan 1</option>
+                    <option value="2" {{ $triwulan == 2 ? 'selected' : '' }}>Triwulan 2</option>
+                    <option value="3" {{ $triwulan == 3 ? 'selected' : '' }}>Triwulan 3</option>
+                    <option value="4" {{ $triwulan == 4 ? 'selected' : '' }}>Triwulan 4</option>
+                </select>
+            </div>
+            </form>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-header bg-white border-bottom p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-            <h6 class="fw-bold text-primary mb-0"><i class="fas fa-tasks me-2"></i>Status Kelengkapan Data</h6>
-            <div class="d-flex align-items-center gap-3">
-                <form action="{{ route('monitoring-capaian.index') }}" method="GET" class="d-flex gap-2">
-                    <input type="number" name="tahun" class="form-control form-control-sm rounded-pill px-3 shadow-sm border-light-subtle" value="{{ $tahun }}" style="width: 100px;">
-                    <select name="triwulan" class="form-select form-select-sm rounded-pill px-3 shadow-sm border-light-subtle" onchange="this.form.submit()">
-                        <option value="1" {{ $triwulan == 1 ? 'selected' : '' }}>Triwulan I</option>
-                        <option value="2" {{ $triwulan == 2 ? 'selected' : '' }}>Triwulan II</option>
-                        <option value="3" {{ $triwulan == 3 ? 'selected' : '' }}>Triwulan III</option>
-                        <option value="4" {{ $triwulan == 4 ? 'selected' : '' }}>Triwulan IV</option>
-                    </select>
-                </form>
-            </div>
-        </div>
+    <!-- Table Card -->
+    <div class="card border-0 shadow-sm rounded-4 text-dark mb-4">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle mb-0" id="monitoringTable" style="font-size: 0.85rem;">
+                <table class="table table-bordered table-hover align-middle mb-0" style="font-size: 0.85rem;">
                     <thead class="table-light text-center align-middle">
                         <tr>
                             <th rowspan="2" width="40">No</th>
-                            <th rowspan="2" style="min-width: 250px;">Indikator</th>
-                            <th rowspan="2">Realisasi TW</th>
-                            <th colspan="2">Rumus Target</th>
-                            <th colspan="3">Narasi & Argumen</th>
-                            <th colspan="4">Analisis & Tindak Lanjut</th>
-                            <th colspan="2">Bukti Dukung</th>
+                            <th rowspan="2" style="min-width: 250px;">Indikator Kinerja</th>
+                            <th colspan="3">Capaian Terhadap Target Triwulanan</th>
+                            <th colspan="3">Capaian Terhadap Target PK (Tahunan)</th>
                         </tr>
                         <tr>
-                            <th class="fw-normal">Nilai X</th>
-                            <th class="fw-normal">Nilai Y</th>
-                            <th class="fw-normal">Dasar Hitung</th>
-                            <th class="fw-normal">Argumen Logis</th>
-                            <th class="fw-normal">Penjelasan</th>
-                            
-                            <th class="fw-normal">Kendala</th>
-                            <th class="fw-normal">Solusi</th>
-                            <th class="fw-normal">RTL</th>
-                            <th class="fw-normal">PIC & Batas</th>
-                            
-                            <th class="fw-normal">Kinerja</th>
-                            <th class="fw-normal">RTL (TW Sblm)</th>
+                            <th class="fw-normal">Target TW</th>
+                            <th class="fw-normal">Realisasi TW</th>
+                            <th class="fw-normal">% Capaian TW</th>
+                            <th class="fw-normal">Target PK</th>
+                            <th class="fw-normal">Realisasi (Kumulatif)</th>
+                            <th class="fw-normal">% Capaian PK</th>
                         </tr>
                     </thead>
                     <tbody>
+                        @php
+                            $sumCapaianTriwulan = 0;
+                            $sumCapaianTahunan = 0;
+                            $countIndikator = 0;
+                            $countIndikatorTriwulan = 0;
+                        @endphp
                         @forelse($indikators as $ind)
                             @php 
-                                $capaian = $capaians->get($ind->id);
                                 $realisasi = $ind->realisasis->first();
-                                $analisis = $ind->analisis->first();
-                                $hasTindakLanjut = $ind->issues->isNotEmpty();
-                                $firstTl = $hasTindakLanjut ? $ind->issues->first() : null;
-                                $firstRtl = $firstTl ? $firstTl->rtls->first() : null;
+                                $pk = $ind->pkTahunans->first();
+                                $targetTwField = 'target_tw' . $triwulan;
+                                $targetTw = $ind->target ? $ind->target->$targetTwField : 0;
+                                $targetPk = $pk ? $pk->target_efektif : ($ind->target_tahunan ?? 0);
                                 
-                                $isComplete = function($val) {
-                                    return ($val !== null && $val !== '' && $val !== false) 
-                                        ? '<i class="fas fa-check-circle text-success fs-5"></i>' 
-                                        : '<i class="fas fa-times-circle text-danger opacity-50"></i>';
-                                };
+                                $realisasiTw = $realisasi ? $realisasi->realisasi_kumulatif : 0;
                                 
-                                $hasRumus = $ind->definisi_x || $ind->definisi_y;
+                                $persenTw = 0;
+                                if ($targetTw > 0) {
+                                    $persenTw = ($realisasiTw / $targetTw) * 100;
+                                }
+                                
+                                $persenPk = 0;
+                                if ($targetPk > 0) {
+                                    $persenPk = ($realisasiTw / $targetPk) * 100;
+                                }
+
+                                $persenTwLimit = $persenTw > 120 ? 120 : $persenTw;
+                                $persenPkLimit = $persenPk > 120 ? 120 : $persenPk;
+
+                                $sumCapaianTriwulan += $persenTwLimit;
+                                $sumCapaianTahunan += $persenPkLimit;
+                                $countIndikator++;
+                                if ($persenTwLimit != 0) $countIndikatorTriwulan++;
                             @endphp
                             <tr>
                                 <td class="text-center">{{ $loop->iteration }}</td>
                                 <td>
                                     <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle rounded-pill px-2 mb-1">{{ $ind->kode }}</span>
-                                    <div class="fw-bold text-dark">{{ $ind->indikator_kinerja }}</div>
+                                    <div class="fw-bold text-dark">
+                                        @if(in_array($ind->id, $accessibleIndikatorIds))
+                                            <a href="{{ route('fra.index', ['tahun' => $tahun, 'triwulan' => $triwulan]) }}" class="text-decoration-none text-primary" title="Buka Pengisian FRA">
+                                                {{ $ind->indikator_kinerja }}
+                                            </a>
+                                        @else
+                                            {{ $ind->indikator_kinerja }}
+                                        @endif
+                                    </div>
                                 </td>
                                 
-                                <td class="text-center">{!! $isComplete($realisasi->realisasi_kumulatif ?? null) !!}</td>
-                                
-                                @if($hasRumus)
-                                    <td class="text-center">{!! $isComplete($realisasi->realisasi_x ?? null) !!}</td>
-                                    <td class="text-center">{!! $isComplete($realisasi->realisasi_y ?? null) !!}</td>
-                                @else
-                                    <td class="text-center text-muted bg-light">-</td>
-                                    <td class="text-center text-muted bg-light">-</td>
-                                @endif
-                                
-                                <td class="text-center">{!! $isComplete($capaian->dasar_hitung ?? null) !!}</td>
-                                <td class="text-center">{!! $isComplete($capaian->argumen_logis ?? null) !!}</td>
-                                <td class="text-center">{!! $isComplete($capaian->penjelasan_lainnya ?? null) !!}</td>
-                                
-                                <td class="text-center">{!! $isComplete($firstTl->deskripsi ?? null) !!}</td>
-                                <td class="text-center">{!! $isComplete($firstTl->solusi_sementara ?? null) !!}</td>
-                                <td class="text-center">{!! $isComplete($firstRtl->deskripsi_rtl ?? null) !!}</td>
-                                <td class="text-center">
-                                    @php
-                                        $picBatas = ($firstRtl->pic_nip ?? null) && ($firstRtl->due_date ?? null);
-                                    @endphp
-                                    {!! $isComplete($picBatas) !!}
+                                <td class="text-center">{{ number_format((float)$targetTw, 2) }}</td>
+                                <td class="text-center">{{ number_format((float)$realisasiTw, 2) }}</td>
+                                <td class="text-center fw-bold {{ $persenTw >= 100 ? 'text-success' : ($persenTw > 0 ? 'text-warning' : 'text-danger') }}">
+                                    {{ number_format((float)$persenTw, 2) }}%
                                 </td>
                                 
-                                <td class="text-center">{!! $isComplete($capaian->link_bukti_kinerja ?? null) !!}</td>
-                                <td class="text-center">{!! $isComplete($capaian->link_bukti_tindak_lanjut ?? null) !!}</td>
+                                <td class="text-center">{{ number_format((float)$targetPk, 2) }}</td>
+                                <td class="text-center">{{ number_format((float)$realisasiTw, 2) }}</td>
+                                <td class="text-center fw-bold {{ $persenPk >= 100 ? 'text-success' : ($persenPk > 0 ? 'text-warning' : 'text-danger') }}">
+                                    {{ number_format((float)$persenPk, 2) }}%
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="14" class="text-center py-5 text-muted">
+                                <td colspan="8" class="text-center py-5 text-muted">
                                     <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
                                     Tidak ada indikator kinerja.
                                 </td>
                             </tr>
                         @endforelse
                     </tbody>
+                    @if($countIndikatorTriwulan > 0 || $countIndikator > 0)
+                    <tfoot class="table-light fw-bold">
+                        <tr>
+                            <td colspan="4" class="text-end">Rata-rata Capaian Triwulanan:</td>
+                            <td class="text-center text-primary">{{ $countIndikatorTriwulan > 0 ? number_format($sumCapaianTriwulan / $countIndikatorTriwulan, 2) : 0 }}%</td>
+                            <td colspan="2" class="text-end">Rata-rata Capaian Tahunan:</td>
+                            <td class="text-center text-success">{{ $countIndikator > 0 ? number_format($sumCapaianTahunan / $countIndikator, 2) : 0 }}%</td>
+                        </tr>
+                    </tfoot>
+                    @endif
                 </table>
             </div>
         </div>

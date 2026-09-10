@@ -11,29 +11,16 @@
                         data-bs-target="#modalKegiatan">
                         <i class="fas fa-plus me-1"></i> Tambah Kegiatan
                     </button>
-                    @if(auth()->user()->isAdmin())
-                        <a href="{{ route('kegiatan-master.template') }}"
-                            class="btn btn-outline-success rounded-pill px-3 ms-2 fw-bold">
-                            <i class="fas fa-download me-1"></i> Template
-                        </a>
-                    @endif
+
                 @else
                     <div class="fw-bold text-dark"><i class="fas fa-tasks me-2 text-primary"></i> Daftar Tanggung Jawab Kegiatan & Tim Anda
                     </div>
                 @endif
             </div>
             @if(auth()->user()->isAdmin())
-                <form action="{{ route('kegiatan-master.import') }}" method="POST" enctype="multipart/form-data"
-                    class="d-flex align-items-center">
-                    @csrf
-                    <div class="input-group input-group-sm">
-                        <input type="file" name="file" class="form-control rounded-start-pill border-success"
-                            style="width: 150px;" required>
-                        <button type="submit" class="btn btn-success rounded-end-pill px-3">
-                            <i class="fas fa-upload me-1"></i> Import
-                        </button>
-                    </div>
-                </form>
+                <button type="button" class="btn btn-success rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#modalImportKegiatan">
+                    <i class="fas fa-upload me-1"></i> Import Kegiatan
+                </button>
             @endif
         </div>
         <div class="card-body">
@@ -52,13 +39,12 @@
                     <tbody>
                         @foreach($kegiatans as $k)
                             <tr id="row-{{ $k->id }}">
-                                <td>{{ $loop->iteration }}</td>
+                                <td class="text-center">{{ $loop->iteration }}</td>
                                 <td class="small fw-bold text-primary">{{ $k->indikator->kode ?: '-' }}</td>
                                 <td class="fw-bold text-dark">{{ $k->nama_kegiatan }}</td>
                                 <td>
                                     @if($k->ketuaTim)
                                         <div class="small fw-bold text-dark">{{ $k->ketuaTim->nama }}</div>
-                                        <div class="extra-small text-muted">{{ $k->ketuaTim->nip }}</div>
                                     @else
                                         <span class="text-muted small italic">- Belum ditunjuk -</span>
                                     @endif
@@ -189,7 +175,11 @@
 
         $(document).ready(function () {
             $('#kegiatanTable').DataTable({
-                language: window.DATATABLES_ID
+                language: window.DATATABLES_ID,
+                order: [],
+                columnDefs: [
+                    { orderable: false, targets: 0 }
+                ]
             });
 
             // Initialize Select2
@@ -272,20 +262,35 @@
 
             // Delete Button Click
             $(document).on('click', '.delete-kegiatan', function () {
-                if (!confirm('Hapus kegiatan ini?')) return;
                 const id = $(this).data('id');
-                const row = $(`#row-${id}`);
-
-                $.ajax({
-                    url: `{{ url('kegiatan-master') }}/${id}`,
-                    method: 'POST',
-                    data: { _token: "{{ csrf_token() }}", _method: 'DELETE' },
-                    success: function (response) {
-                        toastr.success(response.message);
-                        row.fadeOut(function () { $(this).remove(); });
-                    },
-                    error: function () {
-                        toastr.error('Gagal menghapus data.');
+                const btn = $(this);
+                Swal.fire({
+                    title: 'Konfirmasi Hapus',
+                    text: 'Yakin ingin menghapus kegiatan ini?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-trash me-1"></i> Ya, Hapus!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+                        $.ajax({
+                            url: `{{ url('kegiatan-master') }}/${id}`,
+                            method: 'POST',
+                            data: { _token: "{{ csrf_token() }}", _method: 'DELETE' },
+                            success: function(res) {
+                                if (res.status === 'success' || res.message) {
+                                    toastr.success(res.message || 'Berhasil dihapus');
+                                    $(`#row-${id}`).fadeOut(300, function() { $(this).remove(); });
+                                }
+                            },
+                            error: function(xhr) {
+                                btn.prop('disabled', false).html('<i class="fas fa-trash"></i>');
+                                toastr.error('Gagal menghapus data.');
+                            }
+                        });
                     }
                 });
             });
@@ -298,4 +303,38 @@
             border-color: #dee2e6;
         }
     </style>
+    <!-- Modal Import Kegiatan -->
+    <div class="modal fade" id="modalImportKegiatan" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Import Data Kegiatan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('kegiatan-master.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body p-4">
+                        <div class="alert alert-info border-0 rounded-4 shadow-sm mb-4">
+                            <div class="small fw-bold"><i class="fas fa-info-circle me-1"></i> Silakan unduh template Excel terlebih dahulu, lalu isi data Master Kegiatan.</div>
+                        </div>
+                        <div class="mb-4 text-center">
+                            <a href="{{ route('kegiatan-master.template') }}" class="btn btn-outline-success rounded-pill px-4 fw-bold">
+                                <i class="fas fa-download me-1"></i> Download Template Kegiatan
+                            </a>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Upload File Excel (.xlsx)</label>
+                            <input type="file" name="file" class="form-control rounded-3 border-light-subtle" required accept=".xlsx, .xls, .csv">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">
+                            <i class="fas fa-upload me-1"></i> Import Data
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection

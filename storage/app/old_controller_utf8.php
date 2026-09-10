@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Http\Controllers;
 
@@ -166,7 +166,7 @@ class TemplateWordController extends Controller
                 $lines = explode("\n", html_entity_decode(strip_tags($text)));
                 $result = [];
                 foreach ($lines as $line) {
-                    $line = preg_replace('/^[-ΓÇó*\s]+/', '', trim($line));
+                    $line = preg_replace('/^[-G��*\s]+/', '', trim($line));
                     if ($line !== '') {
                         $result[] = $line;
                     }

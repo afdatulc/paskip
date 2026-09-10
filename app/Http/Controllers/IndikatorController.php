@@ -17,18 +17,21 @@ class IndikatorController extends Controller
     {
         $query = Indikator::with('pic')
             ->withCount([
-                'kegiatanMasters',
-                'outputMasters',
-                'outputMasters as completed_outputs_count' => function ($q) {
-                    $q->where('is_achieved', true);
-                }
+                'outputMasters'
             ]);
         
-        if (!auth()->user()->isAdmin()) {
+        if (!auth()->user()->isAdminOrPimpinan()) {
             $pegawaiId = auth()->user()->pegawai_id;
             if ($pegawaiId) {
-                // Show indicators where user is PIC
-                $query->where('pic_id', $pegawaiId);
+                if (auth()->user()->isPic()) {
+                    $query->where('pic_id', $pegawaiId);
+                } elseif (auth()->user()->isAnggota()) {
+                    $query->whereHas('anggotas', function($q) use ($pegawaiId) {
+                        $q->where('pegawai_id', $pegawaiId);
+                    });
+                } else {
+                    $query->whereRaw('1 = 0');
+                }
             } else {
                 $query->whereRaw('1 = 0');
             }
@@ -41,12 +44,27 @@ class IndikatorController extends Controller
 
     public function store(IndikatorRequest $request)
     {
-        if (!auth()->user()->isAdmin()) {
+        if (!auth()->user()->isAdminOrPimpinan()) {
             abort(403, 'Hanya Admin yang dapat menambahkan indikator.');
         }
 
-        $indikator = Indikator::create($request->validated());
-        $indikator->target()->create();
+        $data = $request->validated();
+        
+        $indikatorData = collect($data)->except([
+            'target_tw1', 'target_tw2', 'target_tw3', 'target_tw4',
+            'target_x_tw1', 'target_x_tw2', 'target_x_tw3', 'target_x_tw4',
+            'target_y_tw1', 'target_y_tw2', 'target_y_tw3', 'target_y_tw4'
+        ])->toArray();
+
+        $indikator = Indikator::create($indikatorData);
+
+        $targetData = collect($data)->only([
+            'target_tw1', 'target_tw2', 'target_tw3', 'target_tw4',
+            'target_x_tw1', 'target_x_tw2', 'target_x_tw3', 'target_x_tw4',
+            'target_y_tw1', 'target_y_tw2', 'target_y_tw3', 'target_y_tw4'
+        ])->toArray();
+
+        $indikator->target()->create($targetData);
         
         if ($request->ajax()) {
             return response()->json([
@@ -61,6 +79,7 @@ class IndikatorController extends Controller
 
     public function show(Indikator $indikator)
     {
+        $indikator->load('target');
         return response()->json($indikator);
     }
 
@@ -69,7 +88,7 @@ class IndikatorController extends Controller
         $data = $request->validated();
         $user = auth()->user();
 
-        if (!$user->isAdmin()) {
+        if (!$user->isAdminOrPimpinan()) {
             if ($indikator->pic_id != $user->pegawai_id) {
                 abort(403, 'Anda bukan PIC untuk indikator ini.');
             }
@@ -77,7 +96,24 @@ class IndikatorController extends Controller
             unset($data['pic_id']);
         }
 
-        $indikator->update($data);
+        $indikatorData = collect($data)->except([
+            'target_tw1', 'target_tw2', 'target_tw3', 'target_tw4',
+            'target_x_tw1', 'target_x_tw2', 'target_x_tw3', 'target_x_tw4',
+            'target_y_tw1', 'target_y_tw2', 'target_y_tw3', 'target_y_tw4'
+        ])->toArray();
+
+        $indikator->update($indikatorData);
+
+        $targetData = collect($data)->only([
+            'target_tw1', 'target_tw2', 'target_tw3', 'target_tw4',
+            'target_x_tw1', 'target_x_tw2', 'target_x_tw3', 'target_x_tw4',
+            'target_y_tw1', 'target_y_tw2', 'target_y_tw3', 'target_y_tw4'
+        ])->toArray();
+
+        $indikator->target()->updateOrCreate(
+            ['indikator_id' => $indikator->id],
+            $targetData
+        );
 
         if ($request->ajax()) {
             return response()->json([
@@ -92,7 +128,7 @@ class IndikatorController extends Controller
     public function updateTautan(Request $request, Indikator $indikator)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && $indikator->pic_id != $user->pegawai_id) {
+        if (!$user->isAdminOrPimpinan() && $indikator->pic_id != $user->pegawai_id) {
             abort(403);
         }
 
@@ -133,9 +169,12 @@ class IndikatorController extends Controller
             'file' => 'required|mimes:xlsx,xls,csv'
         ]);
 
-        Excel::import(new IndikatorImport, $request->file('file'));
-
-        return redirect()->route('indikator.index')->with('success', 'Data Indikator berhasil diimport.');
+        try {
+            Excel::import(new IndikatorImport, $request->file('file'));
+            return redirect()->route('indikator.index')->with('success', 'Data Indikator berhasil diimport.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Format file tidak sesuai template! (' . $e->getMessage() . ')');
+        }
     }
 
     public function importXY(Request $request)
@@ -144,9 +183,12 @@ class IndikatorController extends Controller
             'file' => 'required|mimes:xlsx,xls,csv'
         ]);
 
-        Excel::import(new IndikatorXYImport, $request->file('file'));
-
-        return redirect()->route('indikator.index')->with('success', 'Data Target dan Definisi X/Y berhasil diimport.');
+        try {
+            Excel::import(new IndikatorXYImport, $request->file('file'));
+            return redirect()->route('indikator.index')->with('success', 'Data Target dan Definisi X/Y berhasil diimport.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Format file tidak sesuai template! (' . $e->getMessage() . ')');
+        }
     }
 
     public function downloadTemplate()
@@ -187,7 +229,7 @@ class IndikatorController extends Controller
     public function updateRichContent(Request $request, Indikator $indikator)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && $indikator->pic_id != $user->pegawai_id) {
+        if (!$user->isAdminOrPimpinan() && $indikator->pic_id != $user->pegawai_id) {
             abort(403);
         }
 
@@ -213,7 +255,7 @@ class IndikatorController extends Controller
     public function uploadMedia(Request $request, Indikator $indikator)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && $indikator->pic_id != $user->pegawai_id) {
+        if (!$user->isAdminOrPimpinan() && $indikator->pic_id != $user->pegawai_id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -243,3 +285,4 @@ class IndikatorController extends Controller
         ]);
     }
 }
+

@@ -16,7 +16,7 @@ class PkTahunanController extends Controller
      */
     public function index(Request $request)
     {
-        $tahun = $request->get('tahun', \App\Models\Setting::get('default_tahun', date('Y')));
+        $tahun = $request->get('tahun', session('global_tahun', date('Y')));
         
         $pkTahunans = PkTahunan::where('tahun', $tahun)
             ->with(['indikator', 'evaluasiTahunan'])
@@ -38,16 +38,12 @@ class PkTahunanController extends Controller
             );
         });
 
-        // Summary
+        // Summary operasional
         $summary = [
             'total' => $pkTahunans->count(),
-            'tercapai' => $pkTahunans->where('capaian', '>=', 100)->count(),
-            'perlu_perhatian' => $pkTahunans->whereBetween('capaian', [80, 99.99])->count(),
-            'kritis' => $pkTahunans->where('capaian', '<', 80)->count(),
             'direvisi' => $pkTahunans->where('status_revisi', true)->count(),
-            'rata_rata' => $pkTahunans->count() > 0 
-                ? CapaianCalculator::rataRataCapaian($pkTahunans->pluck('capaian')->toArray())
-                : 0,
+            'sudah_realisasi' => $pkTahunans->where('realisasi_saat_ini', '>', 0)->count(),
+            'belum_realisasi' => $pkTahunans->where('realisasi_saat_ini', 0)->count(),
         ];
 
         return view('pk_tahunan.index', compact('pkTahunans', 'tahun', 'summary'));

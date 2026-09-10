@@ -3,99 +3,114 @@
 @section('title', 'Dashboard Tindak Lanjut')
 
 @section('content')
-    <div class="d-flex justify-content-between align-items-end mb-4">
-        <div>
-            <h4 class="fw-bold text-dark mb-1">Dashboard Tindak Lanjut</h4>
-            <div class="text-muted small">To-Do List untuk pelaksanaan Rencana Tindak Lanjut (RTL).</div>
+
+
+    <!-- Filter Card -->
+    <div class="card mb-4 shadow-sm border-0 rounded-4">
+        <div class="card-body">
+            <form action="{{ route('monitoring-rtl.index') }}" method="GET" class="d-flex gap-3 align-items-end flex-wrap">
+                <input type="hidden" name="tab" value="{{ $tab }}">
+                <div>
+                    <label class="form-label text-muted small fw-bold mb-1">Tahun</label>
+                    <select name="tahun" class="form-select" style="width: 120px;" onchange="this.form.submit()">
+                        @php $currentYear = date('Y'); @endphp
+                        @for($i = $currentYear - 2; $i <= $currentYear + 2; $i++)
+                            <option value="{{ $i }}" {{ $tahun == $i ? 'selected' : '' }}>{{ $i }}</option>
+                        @endfor
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label text-muted small fw-bold mb-1">Triwulan</label>
+                    <select name="triwulan" class="form-select" onchange="this.form.submit()">
+                        <option value="1" {{ $triwulan == 1 ? 'selected' : '' }}>Triwulan 1</option>
+                        <option value="2" {{ $triwulan == 2 ? 'selected' : '' }}>Triwulan 2</option>
+                        <option value="3" {{ $triwulan == 3 ? 'selected' : '' }}>Triwulan 3</option>
+                        <option value="4" {{ $triwulan == 4 ? 'selected' : '' }}>Triwulan 4</option>
+                    </select>
+                </div>
+            </form>
         </div>
     </div>
 
     <!-- Tab Filters -->
     <ul class="nav nav-pills mb-4 gap-2 border-bottom pb-3">
         <li class="nav-item">
-            <a class="nav-link rounded-pill {{ $tab == 'semua' ? 'active' : 'bg-light text-dark' }}" href="{{ route('monitoring-rtl.index', ['tab' => 'semua']) }}">
+            <a class="nav-link rounded-pill {{ $tab == 'semua' ? 'active' : 'bg-light text-dark' }}" href="{{ route('monitoring-rtl.index', ['tab' => 'semua', 'tahun' => $tahun, 'triwulan' => $triwulan]) }}">
                 Semua <span class="badge bg-secondary ms-1">{{ $counts['semua'] }}</span>
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link rounded-pill {{ $tab == 'overdue' ? 'active bg-danger' : 'bg-light text-dark' }}" href="{{ route('monitoring-rtl.index', ['tab' => 'overdue']) }}">
-                Terlambat (Overdue) <span class="badge bg-danger ms-1">{{ $counts['overdue'] }}</span>
+            <a class="nav-link rounded-pill {{ $tab == 'belum_tindak_lanjut' ? 'active bg-primary' : 'bg-light text-dark' }}" href="{{ route('monitoring-rtl.index', ['tab' => 'belum_tindak_lanjut', 'tahun' => $tahun, 'triwulan' => $triwulan]) }}">
+                Belum Ada Tindak Lanjut <span class="badge bg-primary ms-1">{{ $counts['belum_tindak_lanjut'] }}</span>
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link rounded-pill {{ $tab == 'berjalan' ? 'active bg-primary' : 'bg-light text-dark' }}" href="{{ route('monitoring-rtl.index', ['tab' => 'berjalan']) }}">
-                Berjalan <span class="badge bg-primary ms-1">{{ $counts['berjalan'] }}</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link rounded-pill {{ $tab == 'menunggu' ? 'active bg-warning text-dark' : 'bg-light text-dark' }}" href="{{ route('monitoring-rtl.index', ['tab' => 'menunggu']) }}">
-                Menunggu Verifikasi <span class="badge bg-warning text-dark ms-1">{{ $counts['menunggu'] }}</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link rounded-pill {{ $tab == 'selesai' ? 'active bg-success' : 'bg-light text-dark' }}" href="{{ route('monitoring-rtl.index', ['tab' => 'selesai']) }}">
-                Selesai <span class="badge bg-success ms-1">{{ $counts['selesai'] }}</span>
+            <a class="nav-link rounded-pill {{ $tab == 'sudah_tindak_lanjut' ? 'active bg-success' : 'bg-light text-dark' }}" href="{{ route('monitoring-rtl.index', ['tab' => 'sudah_tindak_lanjut', 'tahun' => $tahun, 'triwulan' => $triwulan]) }}">
+                Sudah Ada Tindak Lanjut <span class="badge bg-success ms-1">{{ $counts['sudah_tindak_lanjut'] }}</span>
             </a>
         </li>
     </ul>
 
-    <!-- Kanban / Card View -->
-    <div class="row g-3">
-        @forelse($rtls as $rtl)
-            @php
-                $isOverdue = $rtl->due_date < date('Y-m-d') && in_array($rtl->status_rtl, ['Open', 'In Progress']);
-            @endphp
-            <div class="col-md-6 col-lg-4">
-                <div class="card h-100 border-0 shadow-sm rounded-4 {{ $isOverdue ? 'border-start border-4 border-danger' : 'border-start border-4 border-primary' }}">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <span class="badge {{ $isOverdue ? 'bg-danger' : ($rtl->status_rtl == 'Closed' ? 'bg-success' : ($rtl->status_rtl == 'Selesai' ? 'bg-warning text-dark' : 'bg-primary')) }} rounded-pill px-3 py-2">
-                                {{ $isOverdue ? 'Overdue' : $rtl->status_rtl }}
-                            </span>
-                            <div class="text-muted extra-small fw-bold">
-                                <i class="fas fa-calendar-alt me-1"></i> Due: <span class="{{ $isOverdue ? 'text-danger' : '' }}">{{ \Carbon\Carbon::parse($rtl->due_date)->format('d M Y') }}</span>
-                            </div>
-                        </div>
-                        
-                        <h6 class="fw-bold mt-2 mb-3 text-dark">{{ $rtl->deskripsi_rtl }}</h6>
-                        
-                        <div class="bg-light p-3 rounded-3 mb-3 mt-auto">
-                            <div class="extra-small text-muted mb-1"><i class="fas fa-exclamation-circle me-1"></i> Berasal dari Kendala:</div>
-                            <div class="small fw-bold text-dark text-truncate" title="{{ $rtl->issue->deskripsi }}">{{ $rtl->issue->deskripsi }}</div>
-                            <div class="extra-small text-muted mt-2"><i class="fas fa-award me-1"></i> IKU:</div>
-                            <div class="small fw-bold text-primary text-truncate" title="{{ $rtl->issue->indikator->indikator_kinerja ?? '-' }}">
-                                {{ $rtl->issue->indikator->indikator_kinerja ?? '-' }}
-                            </div>
-                        </div>
-                        
-                        @if(in_array($rtl->status_rtl, ['Open', 'In Progress']))
-                            <button class="btn btn-outline-primary rounded-pill w-100 mt-2 btn-eksekusi" 
-                                data-id="{{ $rtl->id }}"
-                                data-deskripsi="{{ $rtl->deskripsi_rtl }}"
-                                data-due="{{ \Carbon\Carbon::parse($rtl->due_date)->format('d M Y') }}">
-                                <i class="fas fa-arrow-up-right-from-square me-1"></i> Update Progres
-                            </button>
-                        @elseif($rtl->status_rtl == 'Selesai')
-                            <button class="btn btn-light text-muted rounded-pill w-100 mt-2" disabled>
-                                <i class="fas fa-hourglass-half me-1"></i> Menunggu Verifikasi Atasan
-                            </button>
-                        @else
-                            <button class="btn btn-light text-success rounded-pill w-100 mt-2" disabled>
-                                <i class="fas fa-check-double me-1"></i> RTL Selesai (Closed)
-                            </button>
-                        @endif
-                    </div>
-                </div>
+    <div class="alert alert-info border-0 shadow-sm rounded-4 small mb-4">
+        <i class="fas fa-info-circle me-1"></i> Menampilkan daftar RTL yang disusun pada <strong>Triwulan {{ $target_triwulan }} Tahun {{ $target_tahun }}</strong> untuk dieksekusi pada <strong>Triwulan {{ $triwulan }} Tahun {{ $tahun }}</strong>.
+    </div>
+
+    <!-- Table View -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="monitoringRtlTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="py-3 text-center" style="width: 5%;">No</th>
+                            <th class="py-3" style="width: 35%;">Kendala & Indikator Kinerja</th>
+                            <th class="py-3" style="width: 35%;">Rencana Tindak Lanjut</th>
+                            <th class="py-3" style="width: 12%;">Batas Waktu</th>
+                            <th class="py-3 text-center" style="width: 13%;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($rtls as $index => $rtl)
+                            @php
+                                $isOverdue = $rtl->batas_waktu < date('Y-m-d') && $rtl->status == 'Belum Ditindak Lanjut';
+                            @endphp
+                            <tr class="{{ $isOverdue ? 'bg-danger bg-opacity-10' : '' }}">
+                                <td class="text-muted text-center">{{ $index + 1 }}</td>
+                                <td>
+                                    <div class="small text-dark mb-2" style="white-space: pre-line;">{{ $rtl->kendala }}</div>
+                                    <div class="small fw-bold text-primary"><i class="fas fa-award me-1"></i> {{ $rtl->indikator->kode ?? '-' }}</div>
+                                </td>
+                                <td>
+                                    <div class="small text-dark fw-bold" style="white-space: pre-line;">{{ $rtl->rtl }}</div>
+                                </td>
+                                <td>
+                                    <div class="small fw-bold {{ $isOverdue ? 'text-danger' : '' }}">
+                                        {{ \Carbon\Carbon::parse($rtl->batas_waktu)->format('d M Y') }}
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    @if($rtl->status == 'Sudah Ditindak Lanjut')
+                                        <span class="badge bg-success px-2 py-1">Sudah Ada Tindak Lanjut</span>
+                                    @else
+                                        <span class="badge {{ $isOverdue ? 'bg-danger' : 'bg-primary' }} px-2 py-1">Belum Ada Tindak Lanjut</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <img src="https://illustrations.popsy.co/gray/success.svg" alt="empty" width="120" class="mb-3 opacity-50">
+                                        <h5 class="fw-bold">Tidak ada RTL yang ditemukan</h5>
+                                        <p>Semua beres! Tidak ada Rencana Tindak Lanjut pada kategori ini.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
-        @empty
-            <div class="col-12">
-                <div class="text-center py-5 text-muted bg-white rounded-4 shadow-sm">
-                    <img src="https://illustrations.popsy.co/gray/success.svg" alt="empty" width="120" class="mb-3 opacity-50">
-                    <h5 class="fw-bold">Tidak ada RTL yang ditemukan</h5>
-                    <p>Semua beres! Tidak ada Rencana Tindak Lanjut pada kategori ini.</p>
-                </div>
-            </div>
-        @endforelse
+        </div>
     </div>
 
     <!-- Modal Eksekusi RTL -->
@@ -137,7 +152,18 @@
 @section('scripts')
 <script>
     $(document).ready(function() {
-        $('.btn-eksekusi').on('click', function() {
+        $('#monitoringRtlTable').DataTable({
+            language: window.DATATABLES_ID,
+            pageLength: 5,
+            lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Semua"]],
+            order: [], // Disable initial sort
+            columnDefs: [
+                { orderable: false, targets: 0 }
+            ]
+        });
+
+        // Use event delegation for .btn-eksekusi to work properly with DataTables pagination
+        $(document).on('click', '.btn-eksekusi', function() {
             const id = $(this).data('id');
             const deskripsi = $(this).data('deskripsi');
             const due = $(this).data('due');

@@ -19,7 +19,7 @@ class KegiatanMasterController extends Controller
         $pegawais = \App\Models\Pegawai::orderBy('pangkat_golongan', 'desc')->orderBy('nip', 'asc')->get();
 
         // Filter: Admin sees all, PIC Indikator sees activities under their indicators or where they are ketua tim
-        if (!auth()->user()->isAdmin()) {
+        if (!auth()->user()->isAdminOrPimpinan()) {
             $pegawaiId = auth()->user()->pegawai_id;
             if ($pegawaiId) {
                 // Show activities where user is either: 
@@ -64,8 +64,10 @@ class KegiatanMasterController extends Controller
 
     public function store(Request $request)
     {
+        if (auth()->user()->isAnggota()) abort(403, 'Akses ditolak.');
+        
         $pegawaiId = auth()->user()->pegawai_id;
-        $isAdmin = auth()->user()->isAdmin();
+        $isAdmin = auth()->user()->isAdminOrPimpinan();
 
         $validated = $request->validate([
             'indikator_id' => [
@@ -113,8 +115,10 @@ class KegiatanMasterController extends Controller
 
     public function update(Request $request, KegiatanMaster $kegiatanMaster)
     {
+        if (auth()->user()->isAnggota()) abort(403, 'Akses ditolak.');
+        
         $pegawaiId = auth()->user()->pegawai_id;
-        $isAdmin = auth()->user()->isAdmin();
+        $isAdmin = auth()->user()->isAdminOrPimpinan();
 
         $validated = $request->validate([
             'indikator_id' => [
@@ -157,6 +161,8 @@ class KegiatanMasterController extends Controller
 
     public function destroy(KegiatanMaster $kegiatanMaster)
     {
+        if (auth()->user()->isAnggota()) abort(403, 'Akses ditolak.');
+        
         $kegiatanMaster->delete();
         
         if (request()->ajax()) {
@@ -171,9 +177,15 @@ class KegiatanMasterController extends Controller
 
     public function import(Request $request)
     {
+        if (auth()->user()->isAnggota()) abort(403, 'Akses ditolak.');
+        
         $request->validate(['file' => 'required|mimes:xlsx,xls']);
-        Excel::import(new KegiatanMasterImport, $request->file('file'));
-        return redirect()->route('kegiatan-master.index')->with('success', 'Data Kegiatan berhasil diimport.');
+        try {
+            Excel::import(new KegiatanMasterImport, $request->file('file'));
+            return redirect()->route('kegiatan-master.index')->with('success', 'Data Kegiatan berhasil diimport.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Format file tidak sesuai template! (' . $e->getMessage() . ')');
+        }
     }
 
     public function downloadTemplate()
@@ -195,6 +207,8 @@ class KegiatanMasterController extends Controller
     }
     public function syncAnggota(Request $request, KegiatanMaster $kegiatanMaster)
     {
+        if (auth()->user()->isAnggota()) abort(403, 'Akses ditolak.');
+        
         $request->validate([
             'anggotas' => 'array',
             'anggotas.*' => 'exists:pegawais,id'
@@ -209,3 +223,4 @@ class KegiatanMasterController extends Controller
         ]);
     }
 }
+

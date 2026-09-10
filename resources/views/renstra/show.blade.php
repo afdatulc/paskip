@@ -96,9 +96,7 @@
         </div>
         @if(auth()->user()->isAdmin())
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('renstra.download-template', $renstra) }}" class="btn btn-sm btn-light border text-success rounded-pill px-3 shadow-none fw-semibold" title="Unduh file Excel berisi daftar IKU">
-                <i class="fas fa-file-excel me-1"></i>Template Import
-            </a>
+
             <button class="btn btn-sm btn-light border text-primary rounded-pill px-3 shadow-none fw-semibold" data-bs-toggle="modal" data-bs-target="#modalImportTarget">
                 <i class="fas fa-file-import me-1"></i>Import Excel
             </button>
@@ -222,7 +220,12 @@
             </div>
             <div class="modal-body p-4">
                 <div class="alert alert-info border-0 rounded-3 small mb-3">
-                    <i class="fas fa-info-circle me-1"></i> Download template Excel terlebih dahulu. Seluruh IKU yang ada di sistem telah terlampir secara otomatis dalam template, sehingga Anda cukup mengisikan target tahunannya saja.
+                    <i class="fas fa-info-circle me-1" style="justify-content: center;"></i> Download template Excel terlebih dahulu. Seluruh IKU telah terlampir secara otomatis dalam template, isikan target tahunannya saja.
+                </div>
+                <div class="mb-4 text-center">
+                    <a href="{{ route('renstra.download-template', $renstra) }}" class="btn btn-outline-success rounded-pill px-4 fw-bold">
+                        <i class="fas fa-download me-1"></i> Download Template Renstra
+                    </a>
                 </div>
                 <div class="mb-3">
                     <label class="form-label small fw-bold">Pilih File Excel (.xlsx / .xls / .csv)</label>
@@ -253,12 +256,12 @@
         if (!data) return;
 
         const targets = tahunList.map(t => data.targets[t] || 0);
-        const realisasis = tahunList.map(t => data.realisasis[t] || 0);
+
 
         if (trendChart) trendChart.destroy();
 
         trendChart = new Chart(document.getElementById('trendChart'), {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: tahunList,
                 datasets: [
@@ -268,15 +271,8 @@
                         backgroundColor: 'rgba(67, 97, 238, 0.2)',
                         borderColor: 'rgba(67, 97, 238, 1)',
                         borderWidth: 2,
-                        borderRadius: 8,
-                    },
-                    {
-                        label: 'Realisasi',
-                        data: realisasis,
-                        backgroundColor: 'rgba(46, 196, 182, 0.2)',
-                        borderColor: 'rgba(46, 196, 182, 1)',
-                        borderWidth: 2,
-                        borderRadius: 8,
+                        tension: 0.3,
+                        fill: true,
                     }
                 ]
             },

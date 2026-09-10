@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Rtl;
-use App\Models\RtlExecution;
+use App\Models\KendalaRtl;
+use App\Models\KendalaRtlExecution;
 use Illuminate\Http\Request;
 
 class RtlController extends Controller
@@ -13,41 +13,46 @@ class RtlController extends Controller
         $user = auth()->user();
         
         $tab = $request->get('tab', 'semua');
+        $tahun = $request->get('tahun', session('global_tahun', date('Y')));
+        $triwulan = $request->get('triwulan', session('global_triwulan', min(ceil(date('n') / 3), 4)));
         
-        $query = Rtl::with(['issue.indikator']);
+        // Menampilkan RTL dari triwulan sebelumnya yang akan dilaksanakan di triwulan terpilih
+        $target_triwulan = $triwulan == 1 ? 4 : $triwulan - 1;
+        $target_tahun = $triwulan == 1 ? $tahun - 1 : $tahun;
 
-        if (!$user->isAdmin()) {
+        $query = KendalaRtl::with(['indikator', 'pic', 'executions'])
+            ->where('tahun', $target_tahun)
+            ->where('triwulan', $target_triwulan);
+
+        if (!$user->isAdminOrPimpinan()) {
             $pegawaiNip = $user->pegawai?->nip ?? $user->pegawai?->email_bps ?? $user->email;
             $query->where('pic_nip', $pegawaiNip);
         }
 
         // Apply tab filters
-        if ($tab == 'overdue') {
-            $query->where('due_date', '<', today())->whereIn('status_rtl', ['Open', 'In Progress']);
-        } elseif ($tab == 'berjalan') {
-            $query->whereIn('status_rtl', ['Open', 'In Progress'])->where('due_date', '>=', today());
-        } elseif ($tab == 'menunggu') {
-            $query->where('status_rtl', 'Selesai'); // Waiting for verification to become Closed
-        } elseif ($tab == 'selesai') {
-            $query->where('status_rtl', 'Closed');
+        if ($tab == 'belum_tindak_lanjut') {
+            $query->where('status', '!=', 'Sudah Ditindak Lanjut');
+        } elseif ($tab == 'sudah_tindak_lanjut') {
+            $query->where('status', 'Sudah Ditindak Lanjut');
         }
 
-        $rtls = $query->orderBy('due_date', 'asc')->get();
+        $rtls = $query->orderBy('batas_waktu', 'asc')->get();
 
         // Counts for tabs
-        $baseQuery = Rtl::query();
-        if (!$user->isAdmin()) {
+        $baseQuery = KendalaRtl::query()
+            ->where('tahun', $target_tahun)
+            ->where('triwulan', $target_triwulan);
+            
+        if (!$user->isAdminOrPimpinan()) {
             $baseQuery->where('pic_nip', $user->pegawai?->nip ?? $user->pegawai?->email_bps ?? $user->email);
         }
         $counts = [
             'semua' => (clone $baseQuery)->count(),
-            'overdue' => (clone $baseQuery)->where('due_date', '<', today())->whereIn('status_rtl', ['Open', 'In Progress'])->count(),
-            'berjalan' => (clone $baseQuery)->whereIn('status_rtl', ['Open', 'In Progress'])->where('due_date', '>=', today())->count(),
-            'menunggu' => (clone $baseQuery)->where('status_rtl', 'Selesai')->count(),
-            'selesai' => (clone $baseQuery)->where('status_rtl', 'Closed')->count(),
+            'belum_tindak_lanjut' => (clone $baseQuery)->where('status', '!=', 'Sudah Ditindak Lanjut')->count(),
+            'sudah_tindak_lanjut' => (clone $baseQuery)->where('status', 'Sudah Ditindak Lanjut')->count(),
         ];
 
-        return view('monitoring_rtl.index', compact('rtls', 'tab', 'counts'));
+        return view('monitoring_rtl.index', compact('rtls', 'tab', 'counts', 'tahun', 'triwulan', 'target_tahun', 'target_triwulan'));
     }
 
     public function storeExecution(Request $request, $id)
@@ -57,32 +62,34 @@ class RtlController extends Controller
             'file_bukti_dukung' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB max
         ]);
 
-        $rtl = Rtl::findOrFail($id);
+        $rtl = KendalaRtl::findOrFail($id);
+
+        $execution = new KendalaRtlExecution();
+        $execution->kendala_rtl_id = $rtl->id;
+        $execution->narasi_tindak_lanjut = $validated['catatan_progres'];
+        $execution->tanggal_pelaksanaan = now();
+        $execution->pegawai_nip = auth()->user()->pegawai?->nip ?? auth()->user()->email;
+        $execution->is_timestamp_ada = true;
         
-        $user = auth()->user();
-        if (!$user->isAdmin()) {
-            $pegawaiNip = $user->pegawai?->nip ?? $user->pegawai?->email_bps ?? $user->email;
-            if ($rtl->pic_nip !== $pegawaiNip) {
-                abort(403, 'Unauthorized action.');
-            }
-        }
-
-        $filePath = null;
         if ($request->hasFile('file_bukti_dukung')) {
-            $filePath = $request->file('file_bukti_dukung')->store('bukti_rtl', 'public');
+            $file = $request->file('file_bukti_dukung');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('bukti_rtl', $filename, 'public');
+            $execution->foto_bukti = $path;
+            $execution->is_dokumentasi_ada = true;
+        } else {
+            $execution->is_dokumentasi_ada = false;
         }
 
-        RtlExecution::create([
-            'rtl_id' => $rtl->id,
-            'triwulan' => ceil(date('n') / 3),
-            'tahun' => date('Y'),
-            'catatan_progres' => $validated['catatan_progres'],
-            'file_bukti_dukung' => $filePath,
-        ]);
+        $execution->save();
 
-        // Change status to Selesai (Waiting for Verification)
-        $rtl->update(['status_rtl' => 'Selesai']);
+        // Automatically set status to "Sudah Ditindak Lanjut" if it was not
+        if ($rtl->status !== 'Sudah Ditindak Lanjut') {
+            $rtl->status = 'Sudah Ditindak Lanjut';
+            $rtl->save();
+        }
 
-        return redirect()->back()->with('success', 'Eksekusi RTL berhasil dikirim untuk diverifikasi.');
+        return back()->with('success', 'Eksekusi RTL berhasil disimpan.');
     }
 }
+

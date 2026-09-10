@@ -163,7 +163,6 @@
                                 @php
                                     $target = $i->target;
                                     $realisasis = $i->realisasis;
-                                    $kendalas = $i->issues->pluck('deskripsi')->filter()->unique();
                                 @endphp
                                 <tr class="row-indikator">
                                     <td class="sticky-col-1">{{ $globalNo++ }}</td>
@@ -214,6 +213,7 @@
                                     </td>
 
                                     <td rowspan="{{ count($i->kegiatanMasters) + 1 }}" class="align-top">
+                                        @php $kendalas = $i->kendalaRtls->where('tahun', $tahun)->pluck('kendala')->filter()->unique(); @endphp
                                         @if($kendalas->count() > 0)
                                             <ul class="mb-0 ps-3">
                                                 @foreach($kendalas as $k)

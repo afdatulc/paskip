@@ -11,28 +11,15 @@
                         data-bs-target="#modalOutput">
                         <i class="fas fa-plus me-1"></i> Tambah Output
                     </button>
-                    @if(auth()->user()->isAdmin())
-                        <a href="{{ route('output-master.template') }}"
-                            class="btn btn-outline-success rounded-pill px-3 ms-2 fw-bold">
-                            <i class="fas fa-download me-1"></i> Template
-                        </a>
-                    @endif
+
                 @else
                     <div class="fw-bold text-dark"><i class="fas fa-box-archive me-2 text-primary"></i> Daftar Tanggung Jawab Output</div>
                 @endif
             </div>
             @if(auth()->user()->isAdmin())
-                <form action="{{ route('output-master.import') }}" method="POST" enctype="multipart/form-data"
-                    class="d-flex align-items-center">
-                    @csrf
-                    <div class="input-group input-group-sm">
-                        <input type="file" name="file" class="form-control rounded-start-pill border-success"
-                            style="width: 150px;" required>
-                        <button type="submit" class="btn btn-success rounded-end-pill px-3">
-                            <i class="fas fa-upload me-1"></i> Import
-                        </button>
-                    </div>
-                </form>
+                <button type="button" class="btn btn-success rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#modalImportOutput">
+                    <i class="fas fa-upload me-1"></i> Import Output
+                </button>
             @endif
         </div>
         <div class="card-body">
@@ -320,26 +307,76 @@
 
             // Delete Button Click
             $(document).on('click', '.delete-output', function () {
-                if (!confirm('Hapus output ini?')) return;
                 const id = $(this).data('id');
                 const row = $(`#row-${id}`);
+                const btn = $(this);
+                const originalHtml = btn.html();
 
-                $.ajax({
-                    url: `{{ url('output-master') }}/${id}`,
-                    method: 'POST',
-                    data: {
-                        _token: "{{ csrf_token() }}",
-                        _method: 'DELETE'
-                    },
-                    success: function (response) {
-                        toastr.success(response.message);
-                        row.fadeOut(function () { $(this).remove(); });
-                    },
-                    error: function () {
-                        toastr.error('Gagal menghapus data.');
+                Swal.fire({
+                    title: 'Konfirmasi Hapus',
+                    text: 'Yakin ingin menghapus output ini?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-trash me-1"></i> Ya, Hapus!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+                        $.ajax({
+                            url: `{{ url('output-master') }}/${id}`,
+                            method: 'POST',
+                            data: {
+                                _token: "{{ csrf_token() }}",
+                                _method: 'DELETE'
+                            },
+                            success: function (response) {
+                                toastr.success(response.message);
+                                row.fadeOut(function () { $(this).remove(); });
+                            },
+                            error: function () {
+                                btn.prop('disabled', false).html(originalHtml);
+                                toastr.error('Gagal menghapus data.');
+                            }
+                        });
                     }
                 });
             });
         });
     </script>
+    <!-- Modal Import Output -->
+    <div class="modal fade" id="modalImportOutput" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Import Data Output</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('output-master.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body p-4">
+                        <div class="alert alert-info border-0 rounded-4 shadow-sm mb-4">
+                            <div class="small fw-bold"><i class="fas fa-info-circle me-1"></i> Silakan unduh template Excel terlebih dahulu, lalu isi data Master Output.</div>
+                        </div>
+                        <div class="mb-4 text-center">
+                            <a href="{{ route('output-master.template') }}" class="btn btn-outline-success rounded-pill px-4 fw-bold">
+                                <i class="fas fa-download me-1"></i> Download Template Output
+                            </a>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Upload File Excel (.xlsx)</label>
+                            <input type="file" name="file" class="form-control rounded-3 border-light-subtle" required accept=".xlsx, .xls, .csv">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">
+                            <i class="fas fa-upload me-1"></i> Import Data
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection

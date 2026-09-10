@@ -44,6 +44,16 @@ class User extends Authenticatable
         return in_array($this->role, ['admin', 'pimpinan']);
     }
 
+    public function isPic()
+    {
+        return $this->role === 'pic';
+    }
+
+    public function isAnggota()
+    {
+        return $this->role === 'anggota';
+    }
+
     public function isPegawai()
     {
         return $this->role === 'pegawai';

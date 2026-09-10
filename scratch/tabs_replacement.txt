@@ -1,0 +1,159 @@
+                        <div class="tab-content p-4" id="manageTabsContent" style="min-height: 480px;">
+                            <!-- Tab 1: Metadata -->
+                            <div class="tab-pane fade show active" id="meta" role="tabpanel">
+                                <div class="row g-3">
+                                    <!-- Sembunyikan Kode -->
+                                    <div class="d-none">
+                                        <input type="text" name="kode" id="kode" class="form-control" placeholder="1.1.1.1">
+                                        <input type="text" name="kode_tujuan" id="kode_tujuan" class="form-control" placeholder="T1">
+                                        <input type="text" name="kode_sasaran" id="kode_sasaran" class="form-control" placeholder="1.1.1">
+                                        <input type="text" name="kode_indikator_kinerja" id="kode_indikator_kinerja" class="form-control" placeholder="1.1.1.1">
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold small">1. Sasaran</label>
+                                        <input type="text" name="sasaran" id="sasaran" class="form-control form-control-sm rounded-3 border-light-subtle" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small">2. Jenis IKU atau Proksi</label>
+                                        <select name="jenis_indikator" id="jenis_indikator" class="form-select form-select-sm rounded-3 border-light-subtle" required>
+                                            <option value="" disabled selected>-- Pilih Jenis --</option>
+                                            <option value="IKU">IKU</option>
+                                            <option value="Proksi">Proksi</option>
+                                            <option value="IK">IK</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small">3. Jenis Periode</label>
+                                        <select name="periode" id="periode" class="form-select form-select-sm rounded-3 border-light-subtle">
+                                            <option value="" disabled selected>-- Pilih Periode --</option>
+                                            <option value="Tahunan">Tahunan</option>
+                                            <option value="Triwulanan">Triwulanan</option>
+                                            <option value="Bulanan">Bulanan</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold small">4. Tipe</label>
+                                        <select name="tipe" id="tipe" class="form-select form-select-sm rounded-3 border-light-subtle">
+                                            <option value="" disabled selected>-- Pilih Tipe --</option>
+                                            <option value="%">%</option>
+                                            <option value="Non %">Non %</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold small">5. Target</label>
+                                        <input type="number" step="0.01" name="target_tahunan" id="target_tahunan" class="form-control form-control-sm rounded-3 border-light-subtle bg-light" readonly placeholder="Diambil dari PK Tahunan">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold small">6. Satuan</label>
+                                        <input type="text" name="satuan" id="satuan" class="form-control form-control-sm rounded-3 border-light-subtle" placeholder="Persen">
+                                    </div>
+                                    <div class="col-12 mt-4 border-top pt-3">
+                                        <label class="form-label fw-bold small">Indikator Kinerja</label>
+                                        <input type="text" name="indikator_kinerja" id="indikator_kinerja" class="form-control form-control-sm rounded-3 border-light-subtle" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small">Tahun</label>
+                                        <input type="number" name="tahun" id="tahun" value="{{ date('Y') }}" class="form-control form-control-sm rounded-3 border-light-subtle" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small">Penanggung Jawab (PIC)</label>
+                                        <select name="pic_id" id="pic_id" class="form-select form-select-sm rounded-3 border-light-subtle" {{ !auth()->user()->isAdmin() ? 'disabled' : '' }}>
+                                            <option value="">-- Tanpa PIC --</option>
+                                            @foreach($pegawais as $p)
+                                                <option value="{{ $p->id }}">{{ $p->nama }} ({{ $p->nip }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Dasar Hitung Formula -->
+                                    <div class="col-12 mt-3">
+                                        <div class="p-3 rounded-3 border border-secondary-subtle bg-light">
+                                            <div class="small fw-bold text-dark mb-1">
+                                                <i class="fas fa-calculator me-1"></i> Formula Dasar Hitung <span class="fw-normal text-muted">(opsional)</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small fw-semibold">Dasar Hitung (Text)</label>
+                                                <textarea name="dasar_hitung" id="dasar_hitung" class="form-control form-control-sm rounded-3" rows="2" placeholder="Jelaskan dasar perhitungan..."></textarea>
+                                            </div>
+                                            <div class="row g-2 mt-1">
+                                                <div class="col-md-6">
+                                                    <label class="form-label small fw-semibold"><span class="badge bg-secondary text-white me-1">X</span>Deskripsi Pembilang (X)</label>
+                                                    <input type="text" name="definisi_x" id="definisi_x" class="form-control form-control-sm rounded-3" placeholder="Misal: Jumlah Publikasi berkualitas">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label small fw-semibold"><span class="badge bg-secondary text-white me-1">Y</span>Deskripsi Penyebut (Y)</label>
+                                                    <input type="text" name="definisi_y" id="definisi_y" class="form-control form-control-sm rounded-3" placeholder="Misal: Jumlah seluruh Publikasi">
+                                                </div>
+                                            </div>
+                                            <div class="row g-2 mt-2">
+                                                <div class="col-md-6">
+                                                    <label class="form-label small fw-semibold">Target Tahunan Pembilang (X)</label>
+                                                    <input type="number" step="0.01" name="target_tahunan_x" id="target_tahunan_x" class="form-control form-control-sm rounded-3">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label small fw-semibold">Target Tahunan Penyebut (Y)</label>
+                                                    <input type="number" step="0.01" name="target_tahunan_y" id="target_tahunan_y" class="form-control form-control-sm rounded-3">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tab 2: Target TW -->
+                            <div class="tab-pane fade" id="target" role="tabpanel">
+                                <div class="alert alert-info border-0 rounded-3 shadow-sm mb-4">
+                                    <div class="small fw-bold"><i class="fas fa-info-circle me-1"></i> Atur target kumulatif untuk masing-masing triwulan.</div>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small">Target TW I</label>
+                                        <input type="number" step="0.01" name="target_tw1" id="target_tw1" class="form-control rounded-3" placeholder="0">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small">Target TW II</label>
+                                        <input type="number" step="0.01" name="target_tw2" id="target_tw2" class="form-control rounded-3" placeholder="0">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small">Target TW III</label>
+                                        <input type="number" step="0.01" name="target_tw3" id="target_tw3" class="form-control rounded-3" placeholder="0">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small">Target TW IV</label>
+                                        <input type="number" step="0.01" name="target_tw4" id="target_tw4" class="form-control rounded-3" placeholder="0">
+                                    </div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <div class="mb-3 xy-row" style="display:none;">
+                                    <div class="small fw-bold text-primary mb-3">
+                                        <i class="fas fa-calculator me-1"></i> Target X & Y (Berdasarkan Definisi Dasar Hitung)
+                                    </div>
+                                    <div class="row g-3">
+                                        <!-- Column X -->
+                                        <div class="col-md-6">
+                                            <div class="p-3 border rounded-3 bg-light">
+                                                <div class="fw-bold small text-primary mb-3"><span class="badge bg-primary me-2">X</span> Target TW I - IV</div>
+                                                <input type="number" step="0.01" name="target_x_tw1" id="target_x_tw1" class="form-control form-control-sm mb-2 bg-white" placeholder="TW I">
+                                                <input type="number" step="0.01" name="target_x_tw2" id="target_x_tw2" class="form-control form-control-sm mb-2 bg-white" placeholder="TW II">
+                                                <input type="number" step="0.01" name="target_x_tw3" id="target_x_tw3" class="form-control form-control-sm mb-2 bg-white" placeholder="TW III">
+                                                <input type="number" step="0.01" name="target_x_tw4" id="target_x_tw4" class="form-control form-control-sm bg-white" placeholder="TW IV">
+                                            </div>
+                                        </div>
+                                        <!-- Column Y -->
+                                        <div class="col-md-6">
+                                            <div class="p-3 border rounded-3 bg-light">
+                                                <div class="fw-bold small text-secondary mb-3"><span class="badge bg-secondary me-2">Y</span> Target TW I - IV</div>
+                                                <input type="number" step="0.01" name="target_y_tw1" id="target_y_tw1" class="form-control form-control-sm mb-2 bg-white" placeholder="TW I">
+                                                <input type="number" step="0.01" name="target_y_tw2" id="target_y_tw2" class="form-control form-control-sm mb-2 bg-white" placeholder="TW II">
+                                                <input type="number" step="0.01" name="target_y_tw3" id="target_y_tw3" class="form-control form-control-sm mb-2 bg-white" placeholder="TW III">
+                                                <input type="number" step="0.01" name="target_y_tw4" id="target_y_tw4" class="form-control form-control-sm bg-white" placeholder="TW IV">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>

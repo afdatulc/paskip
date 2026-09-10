@@ -8,7 +8,6 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use App\Models\Indikator;
 use App\Models\Realisasi;
 use App\Models\CapaianKinerja;
-use App\Models\Analisis;
 
 class CapaianKinerjaImport implements ToCollection, WithHeadingRow
 {
@@ -34,6 +33,13 @@ class CapaianKinerjaImport implements ToCollection, WithHeadingRow
 
             $indikator = Indikator::where('kode', $kode)->first();
             if (!$indikator) continue;
+
+            // Validasi PIC: jika bukan admin/pimpinan, hanya bisa import IKU miliknya
+            if (!auth()->user()->isAdmin() && !auth()->user()->isPimpinan()) {
+                if ($indikator->pic_id != auth()->user()->pegawai_id) {
+                    continue;
+                }
+            }
 
             // Proses Realisasi untuk Triwulan yang dipilih
             if (isset($row['realisasi_tw']) && is_numeric($row['realisasi_tw'])) {
@@ -67,17 +73,7 @@ class CapaianKinerjaImport implements ToCollection, WithHeadingRow
                 ]
             );
             
-            // Generate Analisis default row if it doesn't exist
-            Analisis::updateOrCreate(
-                [
-                    'indikator_id' => $indikator->id,
-                    'triwulan' => $this->triwulan,
-                ],
-                [
-                    'severity' => 'Low',
-                    'pegawai_nip' => auth()->user()->pegawai?->nip ?? auth()->user()->pegawai?->email_bps,
-                ]
-            );
+
 
 
             // Parse text to arrays
@@ -103,35 +99,21 @@ class CapaianKinerjaImport implements ToCollection, WithHeadingRow
             }
 
             if (!empty(trim($kendalaRaw)) || !empty(trim($solusiRaw)) || !empty(trim($rtlRaw))) {
-                // Hapus data lama agar tidak dobel saat re-import
-                $oldIssues = \App\Models\Issue::where('indikator_id', $indikator->id)
-                    ->where('triwulan', $this->triwulan)
-                    ->where('tahun', $this->tahun)
-                    ->get();
-                foreach ($oldIssues as $oi) {
-                    $oi->rtls()->delete();
-                    $oi->delete();
-                }
-
-                $issue = \App\Models\Issue::create([
-                    'indikator_id' => $indikator->id,
-                    'triwulan' => $this->triwulan,
-                    'tahun' => $this->tahun,
-                    'status_kendala' => 'Sebagian Selesai',
-                    'deskripsi' => !empty(trim($kendalaRaw)) ? $kendalaRaw : '-',
-                    'solusi_sementara' => !empty(trim($solusiRaw)) ? $solusiRaw : null,
-                    'pegawai_nip' => auth()->user()->pegawai ? auth()->user()->pegawai->nip : '-',
-                ]);
-                
-                if (!empty(trim($rtlRaw))) {
-                    \App\Models\Rtl::create([
-                        'issue_id' => $issue->id,
-                        'deskripsi_rtl' => $rtlRaw,
-                        'pic_nip' => !empty(trim($picRaw)) ? $picRaw : null,
-                        'due_date' => $parsedBatasWaktu,
-                        'status_rtl' => 'Open',
-                    ]);
-                }
+                \App\Models\KendalaRtl::updateOrCreate(
+                    [
+                        'indikator_id' => $indikator->id,
+                        'triwulan' => $this->triwulan,
+                        'tahun' => $this->tahun,
+                    ],
+                    [
+                        'kendala' => !empty(trim($kendalaRaw)) ? trim($kendalaRaw) : null,
+                        'solusi' => !empty(trim($solusiRaw)) ? trim($solusiRaw) : null,
+                        'rtl' => !empty(trim($rtlRaw)) ? trim($rtlRaw) : null,
+                        'batas_waktu' => $parsedBatasWaktu,
+                        'pic_nip' => !empty(trim($picRaw)) ? trim($picRaw) : null,
+                        'status' => 'Belum Ditindak Lanjut',
+                    ]
+                );
             }
 
         }

@@ -97,26 +97,34 @@ class PegawaiController extends Controller
             return redirect()->back()->with('error', 'Pegawai tidak memiliki email BPS. Harap update data email terlebih dahulu.');
         }
 
-        // Generate password acak yang aman (bukan 'password')
-        $plainPassword = Str::random(12);
+        // Menentukan role secara otomatis
+        $role = 'anggota';
+        if (str_contains(strtolower($pegawai->jabatan), 'kepala bps')) {
+            $role = 'pimpinan';
+        } elseif (\App\Models\Indikator::where('pic_id', $pegawai->id)->exists()) {
+            $role = 'pic';
+        }
+
+        // Set default password menjadi 'password'
+        $plainPassword = 'password';
 
         $user = \App\Models\User::updateOrCreate(
             ['email' => $pegawai->email_bps],
             [
                 'name'       => $pegawai->nama,
                 'password'   => \Illuminate\Support\Facades\Hash::make($plainPassword),
-                'role'       => 'pegawai',
+                'role'       => $role,
                 'pegawai_id' => $pegawai->id
             ]
         );
 
-        $message = "Akun untuk {$pegawai->nama} berhasil diaktifkan. Password: {$plainPassword} (Mohon segera informasikan ke pegawai dan minta untuk segera mengganti password).";
+        $message = "Akun untuk {$pegawai->nama} berhasil diaktifkan. Password default adalah: {$plainPassword}";
 
         if (request()->ajax()) {
             return response()->json([
                 'status'   => 'success',
                 'message'  => $message,
-                'password' => $plainPassword, // Hanya untuk ditampilkan sekali ke Admin
+                'password' => $plainPassword, 
             ]);
         }
 
@@ -140,8 +148,12 @@ class PegawaiController extends Controller
     public function import(Request $request)
     {
         $request->validate(['file' => 'required|mimes:xlsx,xls']);
-        Excel::import(new PegawaiImport, $request->file('file'));
-        return redirect()->route('pegawai.index')->with('success', 'Data Pegawai berhasil diimport.');
+        try {
+            Excel::import(new PegawaiImport, $request->file('file'));
+            return redirect()->route('pegawai.index')->with('success', 'Data Pegawai berhasil diimport.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Format file tidak sesuai template! (' . $e->getMessage() . ')');
+        }
     }
 
     public function syncApi()
@@ -216,7 +228,7 @@ class PegawaiController extends Controller
                 return response()->json(['status' => 'success', 'message' => "Sync berhasil. $countCreated data ditambahkan, $countUpdated data diperbarui."]);
             }
             return redirect()->back()->with('success', "Sync berhasil. $countCreated data ditambahkan, $countUpdated data diperbarui.");
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             if (request()->ajax()) {
                 return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
             }

@@ -29,29 +29,30 @@ class CapaianCalculator
         ?float $realisasi,
         string $polarisasi = 'positif',
         float $batasMaksimal = self::BATAS_MAKSIMAL
-    ): float {
+    ): ?float {
         // Handle data belum diinput / kosong
         if (is_null($target) || is_null($realisasi)) {
-            return 0;
-        }
-
-        // Handle target 0 dan realisasi 0
-        if ($target == 0 && $realisasi == 0) {
-            return 100.0;
+            return null;
         }
 
         $capaian = 0;
 
         if (strtolower($polarisasi) === 'positif') {
             // Makin tinggi makin baik
-            if ($target == 0) {
+            // Rumus Excel: IF(AND(Target=0,Realisasi>0),120,IF(OR(Target=0,Realisasi<=0),"-",MIN(Realisasi/Target*100,120)))
+            if ($target == 0 && $realisasi > 0) {
                 $capaian = $batasMaksimal;
+            } elseif ($target == 0 || $realisasi <= 0) {
+                return null;
             } else {
                 $capaian = ($realisasi / $target) * 100;
             }
         } elseif (strtolower($polarisasi) === 'negatif') {
             // Makin rendah makin baik
-            if ($realisasi == 0) {
+            // Jika target 0 dan realisasi 0, tercapai sempurna
+            if ($target == 0 && $realisasi == 0) {
+                return null; // Atau batas maksimal, tapi biasanya tidak bisa dihitung
+            } elseif ($realisasi == 0) {
                 // Target tercapai sempurna (0 error/kemiskinan)
                 $capaian = $batasMaksimal;
             } else {

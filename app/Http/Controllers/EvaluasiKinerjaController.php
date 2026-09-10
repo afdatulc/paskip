@@ -10,11 +10,11 @@ class EvaluasiKinerjaController extends Controller
 {
     public function index(Request $request)
     {
-        $defaultTahun = \App\Models\Setting::get('default_tahun', date('Y'));
-        $defaultTriwulan = \App\Models\Setting::get('default_triwulan', ceil(date('n') / 3));
+        $defaultTahun = date('Y');
+        $defaultTriwulan = ceil(date('n') / 3);
 
-        $tahun = $request->get('tahun', $defaultTahun);
-        $triwulan = $request->get('triwulan', $defaultTriwulan);
+        $tahun = $request->get('tahun', session('global_tahun', $defaultTahun));
+        $triwulan = $request->get('triwulan', session('global_triwulan', $defaultTriwulan));
 
         $user = auth()->user();
         
@@ -22,8 +22,6 @@ class EvaluasiKinerjaController extends Controller
             ->where('tahun', $tahun)
             ->with(['realisasis' => function($q) use ($triwulan) {
                 $q->where('triwulan', $triwulan);
-            }, 'issues' => function($q) use ($triwulan, $tahun) {
-                $q->where('triwulan', $triwulan)->where('tahun', $tahun);
             }])
             ->get();
             

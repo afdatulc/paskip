@@ -16,20 +16,9 @@
                     <a href="{{ route('tabel-ro.create') }}" class="btn btn-primary rounded-pill px-4 shadow-sm">
                         <i class="fas fa-plus me-1"></i> Tambah RO Baru
                     </a>
-                    <a href="{{ route('tabel-ro.template') }}" class="btn btn-outline-success rounded-pill px-3 fw-bold">
-                        <i class="fas fa-download me-1"></i> Template
-                    </a>
-                    <form action="{{ route('tabel-ro.import') }}" method="POST" enctype="multipart/form-data"
-                        class="d-inline-flex align-items-center">
-                        @csrf
-                        <div class="input-group input-group-sm">
-                            <input type="file" name="file" class="form-control rounded-start-pill border-success"
-                                style="width: 150px;" required>
-                            <button type="submit" class="btn btn-success rounded-end-pill px-3">
-                                <i class="fas fa-upload me-1"></i> Import
-                            </button>
-                        </div>
-                    </form>
+                    <button type="button" class="btn btn-success rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#modalImportRO">
+                        <i class="fas fa-upload me-1"></i> Import Data RO
+                    </button>
                 </div>
             </div>
         </div>
@@ -78,7 +67,7 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th class="text-secondary small fw-bold text-uppercase">No</th>
+                                <th class="text-secondary small fw-bold text-uppercase text-center">No</th>
                                 <th class="text-secondary small fw-bold text-uppercase">Indikator</th>
                                 <th class="text-secondary small fw-bold text-uppercase">Rincian Output (RO)</th>
                                 <th class="text-secondary small fw-bold text-uppercase">Periode</th>
@@ -90,7 +79,7 @@
                         <tbody>
                             @forelse($ros as $key => $ro)
                                 <tr>
-                                    <td>{{ $ros->firstItem() + $key }}</td>
+                                    <td class="text-center">{{ $ros->firstItem() + $key }}</td>
                                     <td>
                                         <div class="fw-bold text-dark">{{ $ro->indikator->kode }}</div>
                                         <small class="text-muted d-block text-truncate" style="max-width: 250px;"
@@ -147,6 +136,40 @@
                 <div class="mt-4">
                     {{ $ros->links() }}
                 </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Import Data RO -->
+    <div class="modal fade" id="modalImportRO" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Import Data RO</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('tabel-ro.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body p-4">
+                        <div class="alert alert-info border-0 rounded-4 shadow-sm mb-4">
+                            <div class="small fw-bold"><i class="fas fa-info-circle me-1"></i> Silakan unduh template Excel terlebih dahulu, lalu isi data Rincian Output (RO).</div>
+                        </div>
+                        <div class="mb-4 text-center">
+                            <a href="{{ route('tabel-ro.template') }}" class="btn btn-outline-success rounded-pill px-4 fw-bold">
+                                <i class="fas fa-download me-1"></i> Download Template RO
+                            </a>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Upload File Excel (.xlsx)</label>
+                            <input type="file" name="file" class="form-control rounded-3 border-light-subtle" required accept=".xlsx, .xls, .csv">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">
+                            <i class="fas fa-upload me-1"></i> Import Data
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

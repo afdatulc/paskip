@@ -54,7 +54,6 @@
                     @php
                         $target = $i->target;
                         $realisasis = $i->realisasis;
-                        $kendalas = $i->analisis->pluck('kendala')->filter()->unique();
                         $kCount = count($i->kegiatanMasters);
                     @endphp
                     <tr>

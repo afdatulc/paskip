@@ -19,6 +19,7 @@
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
 
     <style>
         :root {
@@ -536,8 +537,9 @@
                 @endif
 
                 {{-- Master Data --}}
+                @if(!auth()->user()->isAnggota())
                 @php 
-                    $isMasterActive = request()->routeIs('indikator.*') || request()->routeIs('anggaran.*') || request()->routeIs('kegiatan-master.*') || request()->routeIs('output-master.*') || request()->routeIs('pegawai.*') || request()->routeIs('tabel-ro.*'); 
+                    $isMasterActive = request()->routeIs('indikator.*') || request()->routeIs('anggaran.*') || request()->routeIs('kegiatan-master.*') || request()->routeIs('pegawai.*') || request()->routeIs('tabel-ro.*') || request()->routeIs('output-master.*'); 
                 @endphp
                 <a class="nav-link {{ $isMasterActive ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseMaster" role="button" aria-expanded="{{ $isMasterActive ? 'true' : 'false' }}" aria-controls="collapseMaster" data-title="Master Data">
                     <i class="fas fa-database"></i> <span class="link-text">Master Data</span>
@@ -545,22 +547,21 @@
                 </a>
                 <div class="collapse {{ $isMasterActive ? 'show' : '' }}" id="collapseMaster">
                     <div class="sub-menu">
-                        <a href="{{ route('indikator.index') }}" class="sub-link {{ request()->routeIs('indikator.*') ? 'active' : '' }}">{{ auth()->user()->isAdmin() ? 'Master Indikator' : 'Indikator Saya' }}</a>
-                        @if (auth()->user()->isAdmin())
-                            <a href="{{ route('anggaran.index') }}" class="sub-link {{ request()->routeIs('anggaran.*') ? 'active' : '' }}">Master Anggaran</a>
-                        @endif
-                        <a href="{{ route('kegiatan-master.index') }}" class="sub-link {{ request()->routeIs('kegiatan-master.*') ? 'active' : '' }}">{{ auth()->user()->isAdmin() ? 'Master Kegiatan' : 'Kegiatan Saya' }}</a>
-                        <a href="{{ route('output-master.index') }}" class="sub-link {{ request()->routeIs('output-master.*') ? 'active' : '' }}">{{ auth()->user()->isAdmin() ? 'Master Output' : 'Output Saya' }}</a>
-                        @if (auth()->user()->isAdmin())
+                        <a href="{{ route('indikator.index') }}" class="sub-link {{ request()->routeIs('indikator.*') ? 'active' : '' }}">{{ auth()->user()->isAdminOrPimpinan() ? 'Master Indikator' : 'Indikator Saya' }}</a>
+                        {{-- Menu Master Kegiatan disembunyikan --}}
+                        {{-- <a href="{{ route('kegiatan-master.index') }}" class="sub-link {{ request()->routeIs('kegiatan-master.*') ? 'active' : '' }}">{{ auth()->user()->isAdminOrPimpinan() ? 'Master Kegiatan' : 'Kegiatan Saya' }}</a> --}}
+                        <a href="{{ route('output-master.index') }}" class="sub-link {{ request()->routeIs('output-master.*') ? 'active' : '' }}">Master Output</a>
+
+                        @if (auth()->user()->isAdminOrPimpinan())
                             <a href="{{ route('pegawai.index') }}" class="sub-link {{ request()->routeIs('pegawai.*') ? 'active' : '' }}">Master Pegawai</a>
-                            <a href="{{ route('tabel-ro.index') }}" class="sub-link {{ request()->routeIs('tabel-ro.*') ? 'active' : '' }}">Master RO</a>
                         @endif
                     </div>
                 </div>
+                @endif
 
                 {{-- Pengisian FRA --}}
                 @php 
-                    $isFraActive = request()->routeIs('capaian-kinerja.*') || request()->routeIs('evaluasi-kinerja.*') || request()->routeIs('analisis-kendala-baru.*') || request()->routeIs('pelaksanaan-rtl-baru.*');
+                    $isFraActive = request()->routeIs('capaian-kinerja.*') || request()->routeIs('analisis-kendala.*') || request()->routeIs('pelaksanaan-rtl.*') || request()->routeIs('fra.*');
                 @endphp
                 <a class="nav-link {{ $isFraActive ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseFra" role="button" aria-expanded="{{ $isFraActive ? 'true' : 'false' }}" aria-controls="collapseFra" data-title="Pengisian FRA">
                     <i class="fas fa-pen-to-square"></i> <span class="link-text">Pengisian FRA</span>
@@ -569,15 +570,14 @@
                 <div class="collapse {{ $isFraActive ? 'show' : '' }}" id="collapseFra">
                     <div class="sub-menu">
                         <a href="{{ route('capaian-kinerja.index') }}" class="sub-link {{ request()->routeIs('capaian-kinerja.*') ? 'active' : '' }}">Capaian Kinerja</a>
-                        <a href="{{ route('evaluasi-kinerja.index') }}" class="sub-link {{ request()->routeIs('evaluasi-kinerja.*') ? 'active' : '' }}">Evaluasi Kinerja</a>
-                        <a href="{{ route('analisis-kendala-baru.index') }}" class="sub-link {{ request()->routeIs('analisis-kendala-baru.*') ? 'active' : '' }}">Pengisian Analisis & Kendala (Baru)</a>
-                        <a href="{{ route('pelaksanaan-rtl-baru.index') }}" class="sub-link {{ request()->routeIs('pelaksanaan-rtl-baru.*') ? 'active' : '' }}">Pelaksanaan RTL (Baru)</a>
+                        <a href="{{ route('analisis-kendala.index') }}" class="sub-link {{ request()->routeIs('analisis-kendala.*') ? 'active' : '' }}">Analisis & Kendala</a>
+                        <a href="{{ route('pelaksanaan-rtl.index') }}" class="sub-link {{ request()->routeIs('pelaksanaan-rtl.*') ? 'active' : '' }}">Pelaksanaan RTL</a>
                     </div>
                 </div>
 
                 {{-- Monitoring --}}
                 @php 
-                    $isMonitoringActive = request()->routeIs('monitoring-capaian.*') || request()->routeIs('monitoring-rtl.*') || request()->routeIs('monitoring-manajerial.*') || request()->routeIs('analisis.*');
+                    $isMonitoringActive = request()->routeIs('monitoring-capaian.*') || request()->routeIs('monitoring-rtl.*') || request()->routeIs('monitoring-manajerial.*') || request()->routeIs('analisis.*') || request()->routeIs('monitoring-kelengkapan.*');
                 @endphp
                 <a class="nav-link {{ $isMonitoringActive ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseMonitoring" role="button" aria-expanded="{{ $isMonitoringActive ? 'true' : 'false' }}" aria-controls="collapseMonitoring" data-title="Monitoring">
                     <i class="fas fa-display"></i> <span class="link-text">Monitoring</span>
@@ -586,17 +586,17 @@
                 <div class="collapse {{ $isMonitoringActive ? 'show' : '' }}" id="collapseMonitoring">
                     <div class="sub-menu">
                         <a href="{{ route('monitoring-capaian.index') }}" class="sub-link {{ request()->routeIs('monitoring-capaian.*') ? 'active' : '' }}">Monitoring Capaian</a>
+                        <a href="{{ route('monitoring-kelengkapan.index') }}" class="sub-link {{ request()->routeIs('monitoring-kelengkapan.*') ? 'active' : '' }}">Monitoring Kelengkapan</a>
                         <a href="{{ route('monitoring-rtl.index') }}" class="sub-link {{ request()->routeIs('monitoring-rtl.*') ? 'active' : '' }}">Monitoring RTL</a>
                         @if(auth()->user()->isAdmin())
-                            <a href="{{ route('monitoring-manajerial.index') }}" class="sub-link {{ request()->routeIs('monitoring-manajerial.*') ? 'active' : '' }}">Monitoring Manajerial</a>
-                            <a href="{{ route('analisis.index') }}" class="sub-link {{ request()->routeIs('analisis.*') ? 'active' : '' }}">Analisis & Kendala</a>
+
                         @endif
                     </div>
                 </div>
 
                 {{-- Lainnya --}}
                 @php 
-                    $isLainnyaActive = request()->routeIs('rekap.capaian') || request()->routeIs('template.word.*');
+                    $isLainnyaActive = request()->routeIs('template.word.*') || request()->routeIs('fra.*');
                 @endphp
                 <a class="nav-link {{ $isLainnyaActive ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseLainnya" role="button" aria-expanded="{{ $isLainnyaActive ? 'true' : 'false' }}" aria-controls="collapseLainnya" data-title="Lainnya">
                     <i class="fas fa-bars-staggered"></i> <span class="link-text">Lainnya</span>
@@ -604,8 +604,8 @@
                 </a>
                 <div class="collapse {{ $isLainnyaActive ? 'show' : '' }}" id="collapseLainnya">
                     <div class="sub-menu">
-                        <a href="{{ route('rekap.capaian') }}" class="sub-link {{ request()->routeIs('rekap.capaian') ? 'active' : '' }}">Rekap Capaian Kinerja</a>
-                        @if (auth()->user()->isAdmin())
+                        <a href="{{ route('fra.index') }}" class="sub-link {{ request()->routeIs('fra.*') ? 'active' : '' }}">Form Rencana Aksi (FRA)</a>
+                        @if (auth()->user()->isAdminOrPimpinan())
                             <a href="{{ route('template.word.index') }}" class="sub-link {{ request()->routeIs('template.word.*') ? 'active' : '' }}">Template Word</a>
                         @endif
                     </div>
@@ -648,14 +648,31 @@
                             <i class="fas fa-user-circle me-2 text-primary"></i> Profil Saya
                         </a>
                     </li>
-                    @if(auth()->user()->isAdmin())
+
                     <li>
-                        <a class="dropdown-item py-2 px-3 rounded-3 mx-2 w-auto" href="#" data-bs-toggle="modal"
-                            data-bs-target="#modalSettings">
-                            <i class="fas fa-cog me-2 text-warning"></i> Pengaturan Periode
-                        </a>
+                        <hr class="dropdown-divider mx-3 opacity-50">
                     </li>
-                    @endif
+                    <li class="px-3 py-1">
+                        <div class="small fw-bold text-muted mb-2"><i class="fas fa-filter me-1"></i> Filter Global</div>
+                        <form action="{{ route('global.filter') }}" method="POST" id="globalFilterFormDropdown">
+                            @csrf
+                            <div class="d-flex gap-2">
+                                <select name="global_tahun" class="form-select form-select-sm rounded-3 bg-light border-0" onchange="document.getElementById('globalFilterFormDropdown').submit()">
+                                    @php $currentYear = date('Y'); $sessionTahun = session('global_tahun', $currentYear); @endphp
+                                    @for($y = $currentYear - 2; $y <= $currentYear + 2; $y++)
+                                        <option value="{{ $y }}" {{ $sessionTahun == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                    @endfor
+                                </select>
+                                <select name="global_triwulan" class="form-select form-select-sm rounded-3 bg-light border-0" onchange="document.getElementById('globalFilterFormDropdown').submit()">
+                                    @php $sessionTw = session('global_triwulan', ceil(date('n') / 3)); @endphp
+                                    <option value="1" {{ $sessionTw == '1' ? 'selected' : '' }}>Triwulan I</option>
+                                    <option value="2" {{ $sessionTw == '2' ? 'selected' : '' }}>Triwulan II</option>
+                                    <option value="3" {{ $sessionTw == '3' ? 'selected' : '' }}>Triwulan III</option>
+                                    <option value="4" {{ $sessionTw == '4' ? 'selected' : '' }}>Triwulan IV</option>
+                                </select>
+                            </div>
+                        </form>
+                    </li>
                     <li>
                         <hr class="dropdown-divider mx-3 opacity-50">
                     </li>
@@ -693,7 +710,7 @@
 
         <footer class="text-center pt-5">
             <hr class="opacity-10 mb-4">
-            &copy; {{ date('Y') }} <span class="text-primary fw-bold">PASKIP</span> - Patrol SAKIP
+            &copy; {{ date('Y') }} <span class="text-primary fw-bold">PASKIP</span> - Patroli SAKIP
         </footer>
     </div>
 
@@ -786,44 +803,7 @@
     </div>
 
     <!-- Modal Pengaturan Periode (Admin Only) -->
-    @if(auth()->user()->isAdmin())
-    <div class="modal fade" id="modalSettings" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <form action="{{ route('settings.store') }}" method="POST" class="modal-content border-0 shadow-lg rounded-4">
-                @csrf
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold text-dark"><i class="fas fa-cog text-warning me-2"></i>Pengaturan Periode</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Tahun Default</label>
-                        <select name="default_tahun" class="form-select rounded-3">
-                            @for($i = date('Y') - 2; $i <= date('Y') + 2; $i++)
-                                <option value="{{ $i }}" {{ \App\Models\Setting::get('default_tahun', date('Y')) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                            @endfor
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Triwulan Default</label>
-                        <select name="default_triwulan" class="form-select rounded-3">
-                            @for($i = 1; $i <= 4; $i++)
-                                <option value="{{ $i }}" {{ \App\Models\Setting::get('default_triwulan', ceil(date('n')/3)) == $i ? 'selected' : '' }}>Q{{ $i }}</option>
-                            @endfor
-                        </select>
-                    </div>
-                    <div class="text-muted extra-small">
-                        *Pengaturan ini akan menjadi periode default bagi seluruh pengguna saat membuka halaman.
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0 pb-4 px-4 justify-content-center">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-warning rounded-pill px-4 shadow-sm">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    @endif
+
 
     <!-- TinyMCE Rich Text Editor -->
     <script src="https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js" referrerpolicy="origin"></script>
@@ -837,8 +817,40 @@
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <script>
         $(document).ready(function() {
+            // Global SweetAlert for all forms with confirm dialogs
+            $('form[onsubmit*="return confirm"]').each(function() {
+                const onsubmitStr = $(this).attr('onsubmit');
+                const match = onsubmitStr.match(/confirm\('([^']+)'\)/);
+                const msg = match ? match[1] : 'Apakah Anda yakin ingin menghapus data ini?';
+                
+                $(this).removeAttr('onsubmit');
+                $(this).addClass('form-delete-swal');
+                $(this).data('swal-msg', msg);
+            });
+
+            $(document).on('submit', '.form-delete-swal', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                Swal.fire({
+                    title: 'Konfirmasi Hapus',
+                    text: form.data('swal-msg'),
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="fas fa-trash me-1"></i> Ya, Hapus!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.removeClass('form-delete-swal');
+                        form.submit();
+                    }
+                });
+            });
+
             // DataTables Language ID
             window.DATATABLES_ID = {
                 "sEmptyTable": "Tidak ada data yang tersedia pada tabel ini",
@@ -908,6 +920,19 @@
                     }
                 });
             });
+            // Global Toast Notification using Toastr
+            window.showToast = function(type, message) {
+                if (type === 'success') {
+                    toastr.success(message);
+                } else if (type === 'error') {
+                    toastr.error(message);
+                } else if (type === 'warning') {
+                    toastr.warning(message);
+                } else {
+                    toastr.info(message);
+                }
+            };
+
             // TinyMCE Global Initialization
             window.initTinyMCE = function(selector) {
                 tinymce.init({

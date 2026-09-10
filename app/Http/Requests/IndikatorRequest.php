@@ -43,6 +43,18 @@ class IndikatorRequest extends FormRequest
             'definisi_y'                 => 'nullable|string|max:500',
             'target_tahunan_x'           => 'nullable|numeric',
             'target_tahunan_y'           => 'nullable|numeric',
+            'target_tw1'                 => 'nullable|numeric',
+            'target_tw2'                 => 'nullable|numeric',
+            'target_tw3'                 => 'nullable|numeric',
+            'target_tw4'                 => 'nullable|numeric',
+            'target_x_tw1'               => 'nullable|numeric',
+            'target_x_tw2'               => 'nullable|numeric',
+            'target_x_tw3'               => 'nullable|numeric',
+            'target_x_tw4'               => 'nullable|numeric',
+            'target_y_tw1'               => 'nullable|numeric',
+            'target_y_tw2'               => 'nullable|numeric',
+            'target_y_tw3'               => 'nullable|numeric',
+            'target_y_tw4'               => 'nullable|numeric',
         ];
     }
 }

@@ -81,7 +81,7 @@ class PublicInputController extends Controller
 
         $query = \App\Models\KegiatanMaster::where('indikator_id', $indikator_id);
 
-        if (!$user->isAdmin()) {
+        if (!$user->isAdminOrPimpinan()) {
             $query->where(function($q) use ($pegawai_id) {
                 $q->where('ketua_tim_id', $pegawai_id)
                   ->orWhereHas('anggotas', function($q2) use ($pegawai_id) {
@@ -144,3 +144,4 @@ class PublicInputController extends Controller
         return redirect()->back()->with('success', 'Aktivitas berhasil dicatat.');
     }
 }
+

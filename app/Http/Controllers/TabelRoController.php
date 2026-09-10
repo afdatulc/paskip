@@ -95,8 +95,12 @@ class TabelRoController extends Controller
     public function import(Request $request)
     {
         $request->validate(['file' => 'required|mimes:xlsx,xls']);
-        Excel::import(new TabelRoImport, $request->file('file'));
-        return redirect()->route('tabel-ro.index')->with('success', 'Data Master RO berhasil diimport.');
+        try {
+            Excel::import(new TabelRoImport, $request->file('file'));
+            return redirect()->route('tabel-ro.index')->with('success', 'Data Master RO berhasil diimport.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Format file tidak sesuai template! (' . $e->getMessage() . ')');
+        }
     }
 
     public function downloadTemplate()

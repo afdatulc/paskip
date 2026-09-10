@@ -184,8 +184,11 @@ class RenstraController extends Controller
             'file' => 'required|mimes:xlsx,xls,csv|max:10240',
         ]);
 
-        Excel::import(new TargetRenstraImport($renstra), $request->file('file'));
-
-        return back()->with('success', 'Target Renstra berhasil diimport dari file Excel.');
+        try {
+            Excel::import(new TargetRenstraImport($renstra), $request->file('file'));
+            return back()->with('success', 'Target Renstra berhasil diimport dari file Excel.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Format file tidak sesuai template! (' . $e->getMessage() . ')');
+        }
     }
 }

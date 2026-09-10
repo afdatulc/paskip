@@ -17,7 +17,7 @@ class TemplateWordController extends Controller
         return view('template_word.index', compact('pegawais'));
     }
 
-            public function exportNotulenCapaian(Request $request)
+    public function exportNotulenCapaian(Request $request)
     {
         if ($request->input('format') === 'word') {
             return $this->exportNotulenCapaianWord($request);
@@ -73,19 +73,13 @@ public function exportNotulenCapaianWord(Request $request)
             'realisasis' => function ($q) use ($validated) {
                 $q->where('triwulan', $validated['triwulan']);
             },
-            'analisis' => function ($q) use ($validated) {
-                $q->where('triwulan', $validated['triwulan']);
-            },
             'capaianKinerjas' => function ($q) use ($validated) {
                 $q->where('tahun', $validated['tahun'])->where('triwulan', $validated['triwulan']);
             },
             'anggarans' => function ($q) use ($validated) {
                 $q->where('tahun', $validated['tahun']);
             },
-            'outputMasters',
-            'issues' => function ($q) use ($validated) {
-                $q->where('tahun', $validated['tahun'])->where('triwulan', $validated['triwulan'])->with('rtls');
-            }
+            'outputMasters'
         ])->get();
 
         $sasaranAnggarans = SasaranAnggaran::where('tahun', $validated['tahun'])->get();
@@ -116,7 +110,6 @@ public function exportNotulenCapaianWord(Request $request)
             $blockIdx = $index + 1;
 
             $realisasi = $indikator->realisasis->first();
-            $analisis = $indikator->analisis->first();
             $capaianData = $indikator->capaianKinerjas->first();
 
             $targetField = 'target_tw' . $validated['triwulan'];
@@ -134,6 +127,22 @@ public function exportNotulenCapaianWord(Request $request)
             $templateProcessor->setValue("target#{$blockIdx}", $target);
             $templateProcessor->setValue("target_tw#{$blockIdx}", $target);
             $templateProcessor->setValue("target_tahunan#{$blockIdx}", $indikator->target_tahunan ?? '-');
+
+            // Format Output Masters
+            if ($indikator->outputMasters && $indikator->outputMasters->count() > 0) {
+                $htmlList = '<ol style="font-family: \'Aptos\'; font-size: 11pt;">';
+                foreach ($indikator->outputMasters as $om) {
+                    $htmlList .= '<li>' . htmlspecialchars($om->nama_output) . '</li>';
+                }
+                $htmlList .= '</ol>';
+                try {
+                    $templateProcessor->setHtmlValue("daftar_output_master#{$blockIdx}", $htmlList);
+                } catch (\Throwable $e) {
+                    $templateProcessor->setValue("daftar_output_master#{$blockIdx}", '-');
+                }
+            } else {
+                $templateProcessor->setValue("daftar_output_master#{$blockIdx}", '-');
+            }
 
             $templateProcessor->setValue("definisi_x#{$blockIdx}", $indikator->definisi_x ?? '-');
             $templateProcessor->setValue("definisi_y#{$blockIdx}", $indikator->definisi_y ?? '-');
@@ -163,7 +172,12 @@ public function exportNotulenCapaianWord(Request $request)
             $templateProcessor->setValue("capaian_triwulan#{$blockIdx}", $capaian_triwulan);
             $templateProcessor->setValue("capaian_tahunan#{$blockIdx}", $capaian_tahunan);
 
-            $issues = $indikator->issues;
+            $issues = \App\Models\KendalaRtl::where('indikator_id', $indikator->id)
+                        ->where('tahun', $validated['tahun'])
+                        ->where('triwulan', $validated['triwulan'])
+                        ->with('pic')
+                        ->orderBy('created_at', 'asc')
+                        ->get();
             $kendalas = [];
             $solusis = [];
             $rtlsDesc = [];
@@ -171,38 +185,38 @@ public function exportNotulenCapaianWord(Request $request)
             $rtlsBatas = [];
 
             $parseLines = function ($text) {
+                if (!$text) return [];
                 $lines = explode("\n", html_entity_decode(strip_tags($text)));
                 $result = [];
                 foreach ($lines as $line) {
-                    $line = preg_replace('/^[-ΓÇó*\s]+/', '', trim($line));
+                    $line = preg_replace('/^[-•*\s]+/', '', trim($line));
                     if ($line !== '') {
                         $result[] = $line;
                     }
                 }
-                return $result;
+                return empty($result) ? ['-'] : $result;
             };
 
             foreach ($issues as $issue) {
-                if ($issue->deskripsi) {
-                    $kendalas = array_merge($kendalas, $parseLines($issue->deskripsi));
+                if ($issue->kendala) {
+                    $kendalas = array_merge($kendalas, $parseLines($issue->kendala));
                 }
-                if ($issue->solusi_sementara) {
-                    $solusis = array_merge($solusis, $parseLines($issue->solusi_sementara));
+                if ($issue->solusi) {
+                    $solusis = array_merge($solusis, $parseLines($issue->solusi));
                 }
-
-                foreach ($issue->rtls as $rtl) {
-                    if ($rtl->deskripsi_rtl) {
-                        $rtlsDesc = array_merge($rtlsDesc, $parseLines($rtl->deskripsi_rtl));
-                    }
-                    if ($rtl->pic_nip) {
-                        $picName = $rtl->pic ? $rtl->pic->nama : $rtl->pic_nip;
-                        $rtlsPic[] = $picName;
-                    }
-                    if ($rtl->due_date) {
-                        $rtlsBatas[] = \Carbon\Carbon::parse($rtl->due_date)->locale('id')->translatedFormat('d F Y');
-                    }
+                if ($issue->rtl) {
+                    $rtlsDesc = array_merge($rtlsDesc, $parseLines($issue->rtl));
+                }
+                if ($issue->pic_nip) {
+                    $picName = $issue->pic ? $issue->pic->nama : $issue->pic_nip;
+                    $rtlsPic[] = $picName;
+                }
+                if ($issue->batas_waktu) {
+                    $rtlsBatas[] = \Carbon\Carbon::parse($issue->batas_waktu)->locale('id')->translatedFormat('d F Y');
                 }
             }
+
+
 
             $templateProcessor->setMultilineValue("kendala#{$blockIdx}", $kendalas);
             $templateProcessor->setMultilineValue("solusi#{$blockIdx}", $solusis);
@@ -223,40 +237,23 @@ public function exportNotulenCapaianWord(Request $request)
 
             try {
                 $templateProcessor->setHtmlValue("dasar_hitung#{$blockIdx}", $dasarHitung);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
             }
             try {
                 $templateProcessor->setHtmlValue("argumen_logis#{$blockIdx}", $argumenLogis);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
             }
             try {
                 $templateProcessor->setHtmlValue("penjelasan_lainnya#{$blockIdx}", $penjelasanLainnya);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
             }
             try {
                 $templateProcessor->setHtmlValue("target_realisasi#{$blockIdx}", $targetRealisasi);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
             }
 
             $templateProcessor->setValue("link_bukti_kinerja#{$blockIdx}", $capaianData->link_bukti_kinerja ?? ($indikator->link_bukti_kinerja ?? '-'));
             $templateProcessor->setValue("link_bukti_tindak_lanjut#{$blockIdx}", $capaianData->link_bukti_tindak_lanjut ?? ($indikator->link_bukti_tindak_lanjut ?? '-'));
-
-            // Output Masters (Daftar Nama Output)
-            $outputMasters = $indikator->outputMasters;
-            $daftarOutputHtml = '';
-            if ($outputMasters->count() > 0) {
-                $daftarOutputHtml = '<ol>';
-                foreach ($outputMasters as $out) {
-                    $daftarOutputHtml .= '<li>' . htmlspecialchars($out->nama_output) . '</li>';
-                }
-                $daftarOutputHtml .= '</ol>';
-            } else {
-                $daftarOutputHtml = '-';
-            }
-            try {
-                $templateProcessor->setHtmlValue("daftar_output_master#{$blockIdx}", $daftarOutputHtml);
-            } catch (\Exception $e) {
-            }
 
             // Target X/Y
             $targetObj = $indikator->target;
@@ -347,10 +344,10 @@ public function exportNotulenCapaianWord(Request $request)
         
         try {
             $templateProcessor->setValue('rata_rata_capaian_triwulan', $rata_rata_capaian_triwulan);
-        } catch (\Exception $e) {}
+        } catch (\Throwable $e) {}
         try {
             $templateProcessor->setValue('rata_rata_capaian_tahunan', $rata_rata_capaian_tahunan);
-        } catch (\Exception $e) {}
+        } catch (\Throwable $e) {}
 
         // Efisiensi Table (Clone Row for sasaran outside the block_indikator)
         $sasarans = $indikators->groupBy('sasaran')->filter(function ($value, $key) {
@@ -438,19 +435,13 @@ public function exportNotulenCapaianHtml(Request $request)
             'realisasis' => function ($q) use ($validated) {
                 $q->where('triwulan', $validated['triwulan']);
             },
-            'analisis' => function ($q) use ($validated) {
-                $q->where('triwulan', $validated['triwulan']);
-            },
             'capaianKinerjas' => function ($q) use ($validated) {
                 $q->where('tahun', $validated['tahun'])->where('triwulan', $validated['triwulan']);
             },
             'anggarans' => function ($q) use ($validated) {
                 $q->where('tahun', $validated['tahun']);
             },
-            'outputMasters',
-            'issues' => function ($q) use ($validated) {
-                $q->where('tahun', $validated['tahun'])->where('triwulan', $validated['triwulan'])->with('rtls');
-            }
+            'outputMasters'
         ])->get();
 
         $sasaranAnggarans = \App\Models\SasaranAnggaran::where('tahun', $validated['tahun'])->get();
@@ -598,5 +589,63 @@ public function exportSuratUndangan(Request $request)
         $tanggal = \Carbon\Carbon::parse($validated['tanggal_kegiatan'])->translatedFormat('d F Y');
 
         return view('template_word.daftar_hadir', compact('validated', 'tanggal', 'pimpinan', 'pembuat', 'jumlah_baris', 'tampilkan_nama', 'pegawais'));
+    }
+
+    public function downloadTemplateRtl($id)
+    {
+        $rtl = \App\Models\KendalaRtl::with('indikator')->findOrFail($id);
+
+        $path = storage_path('app/templates/template_bukti_tindak_lanjut.docx');
+        if (!file_exists($path)) {
+            return back()->with('error', 'File template tidak ditemukan.');
+        }
+
+        try {
+            $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($path);
+            
+            // Replace variables if they exist in the template
+            $templateProcessor->setValue('sasaran', htmlspecialchars($rtl->indikator->sasaran ?? '-'));
+            $templateProcessor->setValue('indikator', htmlspecialchars($rtl->indikator->indikator_kinerja ?? '-'));
+            
+            $rtlText = $rtl->rtl ?? '-';
+            $lines = explode("\n", $rtlText);
+            $cleanedLines = [];
+            $replacements = [];
+            
+            foreach ($lines as $line) {
+                // Hapus awalan strip, bullet, bintang, dan spasi kosong di awal kalimat
+                $cleanedLine = preg_replace('/^[-•*\s]+/', '', $line);
+                if (trim($cleanedLine) !== '') {
+                    $cleaned = htmlspecialchars(trim($cleanedLine));
+                    $cleanedLines[] = $cleaned;
+                    $replacements[] = ['rtl' => $cleaned];
+                }
+            }
+
+            if (empty($replacements)) {
+                $replacements[] = ['rtl' => '-'];
+                $cleanedLines[] = '-';
+            }
+
+            // Cara 1: Menggunakan block untuk dukungan bullet Word (disarankan)
+            try {
+                $templateProcessor->cloneBlock('block_rtl', 0, true, false, $replacements);
+            } catch (\Throwable $e) {
+                // Abaikan jika block_rtl tidak ada di template
+            }
+
+            // Cara 2: Fallback jika user masih memakai ${rtl} biasa tanpa block
+            $rtlFormatted = implode('</w:t><w:br/><w:t>', $cleanedLines);
+            $templateProcessor->setValue('rtl', $rtlFormatted);
+
+            $fileName = 'Template_Bukti_Tindak_Lanjut_RTL_' . time() . '.docx';
+            $tempPath = storage_path('app/public/' . $fileName);
+            $templateProcessor->saveAs($tempPath);
+
+            return response()->download($tempPath, 'Template_RTL_' . $rtl->indikator->kode . '.docx')->deleteFileAfterSend(true);
+        } catch (\Throwable $e) {
+            // Fallback to static download if processing fails (e.g., corrupted file)
+            return response()->download($path, 'Template_Bukti_Tindak_Lanjut_RTL.docx');
+        }
     }
 }
